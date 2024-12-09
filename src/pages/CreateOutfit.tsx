@@ -17,7 +17,7 @@ const CreateOutfit = () => {
     setMessages([...messages, newMessage]);
     setInput("");
 
-    // TODO: Implement AI response logic
+    // Simulate AI response
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
@@ -31,18 +31,8 @@ const CreateOutfit = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Outfit Preview Section */}
-      <div className="flex-1 p-6 border-r">
-        <div className="bg-card rounded-lg h-full p-4">
-          <h2 className="text-2xl font-bold mb-4">Outfit Preview</h2>
-          <div className="aspect-square bg-accent rounded-lg flex items-center justify-center">
-            <p className="text-muted-foreground">Outfit will appear here</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Chat Section */}
-      <div className="w-1/3 flex flex-col h-screen">
+      {/* Chat Section - Now the main focus */}
+      <div className="flex-1 flex flex-col h-screen">
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message, index) => (
             <div
@@ -56,7 +46,7 @@ const CreateOutfit = () => {
                   message.role === "user"
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted"
-                }`}
+                } animate-fade-up`}
               >
                 {message.content}
               </div>
@@ -77,6 +67,16 @@ const CreateOutfit = () => {
             <Send className="h-4 w-4" />
           </Button>
         </form>
+      </div>
+
+      {/* Outfit Preview Section - Now smaller */}
+      <div className="w-1/3 p-6 border-l">
+        <div className="bg-card rounded-lg h-full p-4">
+          <h2 className="text-2xl font-bold mb-4">Outfit Preview</h2>
+          <div className="aspect-square bg-accent rounded-lg flex items-center justify-center">
+            <p className="text-muted-foreground">Generated outfit will appear here</p>
+          </div>
+        </div>
       </div>
     </div>
   );
