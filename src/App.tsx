@@ -10,6 +10,11 @@ import Outfit from "./pages/Outfit";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CreateOutfit from "./pages/CreateOutfit";
+import Onboarding from "./pages/Onboarding";
+import Tour from "./pages/Tour";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Blog from "./pages/Blog";
 
 const queryClient = new QueryClient();
 
@@ -23,11 +28,15 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/tour" element={<Tour />} />
           <Route path="/dashboard" element={<Index />} />
           <Route path="/wardrobe" element={<Wardrobe />} />
           <Route path="/outfit" element={<Outfit />} />
           <Route path="/create-outfit" element={<CreateOutfit />} />
-          {/* Add protected routes later */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/blog" element={<Blog />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
