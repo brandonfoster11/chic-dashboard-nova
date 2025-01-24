@@ -38,7 +38,153 @@ const onboardingSteps = [
     ],
     key: "ageRange",
   },
-  // ... Add remaining steps following the same pattern
+  {
+    id: 3,
+    title: "Fashion Objective",
+    question: "What's your main fashion objective?",
+    type: "radio",
+    options: [
+      { value: "budget", label: "Stay stylish on a budget" },
+      { value: "versatile", label: "Build a versatile wardrobe" },
+      { value: "trends", label: "Keep up with trends" },
+      { value: "signature", label: "Build a signature style" },
+      { value: "events", label: "Dress for specific events/occasions" },
+    ],
+    key: "fashionObjective",
+  },
+  {
+    id: 4,
+    title: "Style Preference",
+    question: "Which style best represents you?",
+    type: "radio",
+    options: [
+      { value: "casual", label: "Casual/Relaxed" },
+      { value: "chic", label: "Chic/Minimalist" },
+      { value: "streetwear", label: "Streetwear/Urban" },
+      { value: "business", label: "Business/Formal" },
+      { value: "sporty", label: "Sporty/Activewear" },
+      { value: "bohemian", label: "Bohemian" },
+      { value: "eclectic", label: "Eclectic/Unique" },
+    ],
+    key: "stylePreference",
+  },
+  {
+    id: 5,
+    title: "Body Shape",
+    question: "Which of these best describes your body shape?",
+    type: "radio",
+    options: [
+      { value: "slim", label: "Slim/Athletic" },
+      { value: "broad", label: "Broad/Stocky" },
+      { value: "muscular", label: "Muscular" },
+      { value: "larger", label: "Larger Build" },
+    ],
+    key: "bodyShape",
+  },
+  {
+    id: 6,
+    title: "Event Types",
+    question: "What types of events do you usually dress for?",
+    type: "checkbox",
+    options: [
+      { value: "work", label: "Work/Business" },
+      { value: "social", label: "Social Events/Nights Out" },
+      { value: "casual", label: "Casual Daywear" },
+      { value: "formal", label: "Formal Events (Weddings, Galas)" },
+      { value: "active", label: "Activewear/Workouts" },
+      { value: "travel", label: "Travel" },
+    ],
+    key: "eventTypes",
+  },
+  {
+    id: 7,
+    title: "Color Preferences",
+    question: "Which color palettes do you prefer in your wardrobe?",
+    type: "checkbox",
+    options: [
+      { value: "neutrals", label: "Neutrals (Black, White, Grey)" },
+      { value: "bold", label: "Bold Colors (Reds, Yellows, Blues)" },
+      { value: "pastels", label: "Pastels (Light Pink, Baby Blue)" },
+      { value: "earth", label: "Earth Tones (Beige, Olive, Brown)" },
+      { value: "monochrome", label: "Monochrome (Single-color outfits)" },
+    ],
+    key: "colorPalettes",
+  },
+  {
+    id: 8,
+    title: "Fit Preference",
+    question: "How do you like your clothes to fit?",
+    type: "radio",
+    options: [
+      { value: "fitted", label: "Tailored/Fitted" },
+      { value: "loose", label: "Loose/Relaxed" },
+      { value: "occasion", label: "Depends on the Occasion" },
+    ],
+    key: "fitPreference",
+  },
+  {
+    id: 9,
+    title: "Fabric Preferences",
+    question: "Which fabrics do you feel most comfortable in?",
+    type: "checkbox",
+    options: [
+      { value: "cotton", label: "Cotton" },
+      { value: "denim", label: "Denim" },
+      { value: "linen", label: "Linen" },
+      { value: "silk", label: "Silk" },
+      { value: "wool", label: "Wool" },
+      { value: "synthetic", label: "Synthetic/Tech fabrics" },
+    ],
+    key: "fabricPreferences",
+  },
+  {
+    id: 10,
+    title: "Shopping Frequency",
+    question: "How frequently do you add new pieces to your wardrobe?",
+    type: "radio",
+    options: [
+      { value: "weekly", label: "Weekly" },
+      { value: "monthly", label: "Monthly" },
+      { value: "quarterly", label: "Every Few Months" },
+      { value: "rarely", label: "Rarely, only when needed" },
+    ],
+    key: "shoppingFrequency",
+  },
+  {
+    id: 11,
+    title: "Brand Preference",
+    question: "Do you prefer specific brands or stores for your wardrobe?",
+    type: "radio",
+    options: [
+      { value: "specific", label: "Yes" },
+      { value: "no_preference", label: "No preference" },
+      { value: "discover", label: "I like discovering new brands" },
+    ],
+    key: "brandPreference",
+  },
+  {
+    id: 12,
+    title: "Preferred Brands",
+    question: "Which brands do you prefer? (Optional)",
+    type: "input",
+    conditional: {
+      dependsOn: "brandPreference",
+      showWhen: ["specific"],
+    },
+    key: "preferredBrands",
+  },
+  {
+    id: 13,
+    title: "Shopping Preference",
+    question: "How do you prefer to shop for new outfits?",
+    type: "radio",
+    options: [
+      { value: "online", label: "Online Shopping" },
+      { value: "store", label: "In-Store Shopping" },
+      { value: "both", label: "Both" },
+    ],
+    key: "shoppingPreference",
+  },
 ];
 
 const Onboarding = () => {
@@ -50,7 +196,7 @@ const Onboarding = () => {
   const progress = (currentStep / totalSteps) * 100;
 
   const handleNext = () => {
-    if (!data[currentStepData.key as keyof typeof data]) {
+    if (!data[currentStepData.key as keyof typeof data] && currentStepData.type !== "input") {
       toast({
         title: "Please make a selection",
         description: "This field is required to continue.",
@@ -75,6 +221,18 @@ const Onboarding = () => {
   const handleSkip = () => {
     navigate("/tour");
   };
+
+  // Check if this step should be shown based on conditional logic
+  const shouldShowStep = () => {
+    if (!currentStepData.conditional) return true;
+    const { dependsOn, showWhen } = currentStepData.conditional;
+    return showWhen.includes(data[dependsOn as keyof typeof data] as string);
+  };
+
+  if (!shouldShowStep()) {
+    handleNext();
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -101,6 +259,35 @@ const Onboarding = () => {
                 </div>
               ))}
             </RadioGroup>
+          )}
+
+          {currentStepData.type === "checkbox" && (
+            <div className="space-y-3">
+              {currentStepData.options.map((option) => (
+                <div key={option.value} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={option.value}
+                    checked={(data[currentStepData.key as keyof typeof data] as string[])?.includes(option.value)}
+                    onCheckedChange={(checked) => {
+                      const currentValues = (data[currentStepData.key as keyof typeof data] as string[]) || [];
+                      const newValues = checked
+                        ? [...currentValues, option.value]
+                        : currentValues.filter((value) => value !== option.value);
+                      updateData(currentStepData.key as keyof typeof data, newValues);
+                    }}
+                  />
+                  <Label htmlFor={option.value}>{option.label}</Label>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {currentStepData.type === "input" && (
+            <Input
+              value={data[currentStepData.key as keyof typeof data] as string || ""}
+              onChange={(e) => updateData(currentStepData.key as keyof typeof data, e.target.value)}
+              placeholder="Enter your preferred brands"
+            />
           )}
 
           <div className="flex justify-between pt-6">
