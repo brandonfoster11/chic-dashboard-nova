@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { OnboardingProvider } from "@/context/OnboardingContext";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
 import Index from "./pages/Index";
@@ -27,33 +28,35 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="system" enableSystem>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="/tour" element={<Tour />} />
-                <Route path="/dashboard" element={<Index />} />
-                <Route path="/wardrobe" element={<Wardrobe />} />
-                <Route path="/outfit" element={<Outfit />} />
-                <Route path="/create-outfit" element={<CreateOutfit />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
-        </BrowserRouter>
+        <OnboardingProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/tour" element={<Tour />} />
+                  <Route path="/dashboard" element={<Index />} />
+                  <Route path="/wardrobe" element={<Wardrobe />} />
+                  <Route path="/outfit" element={<Outfit />} />
+                  <Route path="/create-outfit" element={<CreateOutfit />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          </BrowserRouter>
+        </OnboardingProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
