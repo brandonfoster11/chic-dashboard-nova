@@ -39,17 +39,22 @@ const tourSteps = [
 
 const Tour = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isNavigating, setIsNavigating] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const totalSteps = tourSteps.length;
 
   useEffect(() => {
-    // Navigate to the correct route for the current step
     const currentTourStep = tourSteps[currentStep - 1];
-    if (location.pathname !== currentTourStep.route) {
+    
+    // Only navigate if we're not already navigating and we're on a different route
+    if (!isNavigating && location.pathname !== currentTourStep.route) {
+      setIsNavigating(true);
       navigate(currentTourStep.route);
+    } else {
+      setIsNavigating(false);
     }
-  }, [currentStep, navigate, location.pathname]);
+  }, [currentStep, navigate, location.pathname, isNavigating]);
 
   const handleNext = () => {
     if (currentStep === totalSteps) {
