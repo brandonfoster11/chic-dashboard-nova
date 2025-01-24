@@ -1,111 +1,98 @@
-import { Wand2, RefreshCcw, Sliders, History } from "lucide-react";
-import { StyleCard } from "@/components/StyleCard";
-import { OutfitCard } from "@/components/OutfitCard";
-import { QuickAction } from "@/components/QuickAction";
-import { useToast } from "@/components/ui/use-toast";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Wand2, ShirtIcon, ImageIcon, TrendingUp } from "lucide-react";
 
 const Index = () => {
-  const { toast } = useToast();
-
-  const handleQuickAction = (action: string) => {
-    toast({
-      title: "Action triggered",
-      description: `${action} action was clicked`,
-    });
-  };
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="container py-8 animate-fade-up">
-        {/* Hero Section */}
-        <section className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome back, Alex</h1>
-          <p className="text-gray-600">Your style today is Modern Minimalist with a touch of Casual Chic</p>
-        </section>
-
-        {/* Quick Actions */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <QuickAction
-            icon={Wand2}
-            label="Get New Recommendations"
-            onClick={() => handleQuickAction("Recommendations")}
-          />
-          <QuickAction
-            icon={RefreshCcw}
-            label="Refresh Style"
-            onClick={() => handleQuickAction("Refresh")}
-          />
-          <QuickAction
-            icon={Sliders}
-            label="Update Preferences"
-            onClick={() => handleQuickAction("Preferences")}
-          />
-          <QuickAction
-            icon={History}
-            label="View History"
-            onClick={() => handleQuickAction("History")}
-          />
-        </section>
-
-        {/* Style Recommendations */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Today's Recommendations</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <OutfitCard
-              imageUrl="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"
-              title="Modern Work Ensemble"
-              description="Perfect for your upcoming meetings"
-            />
-            <OutfitCard
-              imageUrl="https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
-              title="Weekend Casual"
-              description="Relaxed yet put-together look"
-            />
-            <OutfitCard
-              imageUrl="https://images.unsplash.com/photo-1581092795360-fd1ca04f0952"
-              title="Evening Smart"
-              description="For your dinner plans tonight"
-            />
+    <div className="container py-8 animate-fade-up">
+      <h1 className="text-3xl font-bold mb-6">Welcome back!</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="p-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="bg-primary/10 p-3 rounded-full mb-4">
+              <ShirtIcon className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-2xl font-bold">156</h3>
+            <p className="text-muted-foreground">Items in Wardrobe</p>
           </div>
-        </section>
+        </Card>
+        
+        <Card className="p-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="bg-primary/10 p-3 rounded-full mb-4">
+              <ImageIcon className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-2xl font-bold">24</h3>
+            <p className="text-muted-foreground">Generated Outfits</p>
+          </div>
+        </Card>
+        
+        <Card className="p-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="bg-primary/10 p-3 rounded-full mb-4">
+              <TrendingUp className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-2xl font-bold">92%</h3>
+            <p className="text-muted-foreground">Style Match Rate</p>
+          </div>
+        </Card>
+        
+        <Card className="p-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="bg-primary/10 p-3 rounded-full mb-4">
+              <Wand2 className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-2xl font-bold">15</h3>
+            <p className="text-muted-foreground">AI Suggestions</p>
+          </div>
+        </Card>
+      </div>
 
-        {/* Stats Overview */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <StyleCard title="Style Analytics">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Style Match Rate</span>
-                <span className="font-medium">92%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Outfits Generated</span>
-                <span className="font-medium">24</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Favorite Style</span>
-                <span className="font-medium">Modern Minimal</span>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+          <div className="space-y-4">
+            <Button 
+              className="w-full justify-start" 
+              variant="outline"
+              onClick={() => navigate("/create-outfit")}
+            >
+              <Wand2 className="mr-2 h-4 w-4" />
+              Generate New Outfit
+            </Button>
+            <Button 
+              className="w-full justify-start" 
+              variant="outline"
+              onClick={() => navigate("/wardrobe")}
+            >
+              <ShirtIcon className="mr-2 h-4 w-4" />
+              Add Items to Wardrobe
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-sm">
+              <span>Generated summer casual outfit</span>
+              <span className="text-muted-foreground">2h ago</span>
             </div>
-          </StyleCard>
-          
-          <StyleCard title="Recent Activity">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Last Style Update</span>
-                <span className="text-gray-600">2 days ago</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Last Purchase</span>
-                <span className="text-gray-600">Yesterday</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Next Style Review</span>
-                <span className="text-gray-600">In 5 days</span>
-              </div>
+            <div className="flex items-center justify-between text-sm">
+              <span>Added 3 new items to wardrobe</span>
+              <span className="text-muted-foreground">5h ago</span>
             </div>
-          </StyleCard>
-        </section>
-      </main>
+            <div className="flex items-center justify-between text-sm">
+              <span>Updated style preferences</span>
+              <span className="text-muted-foreground">1d ago</span>
+            </div>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 };
