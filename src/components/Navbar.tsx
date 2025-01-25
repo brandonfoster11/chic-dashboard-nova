@@ -33,6 +33,9 @@ export const Navbar = () => {
               <Wand2 className="h-4 w-4 mr-2" />
               Generate Outfit
             </Button>
+            <Button variant="ghost" onClick={() => navigate("/pricing")}>
+              Pricing
+            </Button>
             <Button variant="ghost" onClick={() => navigate("/blog")}>
               Blog
             </Button>

@@ -22,6 +22,7 @@ import Blog from "./pages/Blog";
 import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AddItem from "./pages/AddItem";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/blog" element={<Blog />} />
+                  <Route path="/pricing" element={<Pricing />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
