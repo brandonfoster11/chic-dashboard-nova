@@ -2,11 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Plus } from "lucide-react";
 import { OutfitCard } from "@/components/OutfitCard";
-import { useNavigate } from "react-router-dom";
 
 const Wardrobe = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="container mx-auto">
@@ -23,7 +20,7 @@ const Wardrobe = () => {
             <Button variant="outline" size="icon">
               <Filter className="h-4 w-4" />
             </Button>
-            <Button onClick={() => navigate("/add-item")}>
+            <Button>
               <Plus className="h-4 w-4 mr-2" />
               Add Item
             </Button>
