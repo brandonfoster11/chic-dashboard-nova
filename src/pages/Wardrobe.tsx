@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Plus } from "lucide-react";
 import { OutfitCard } from "@/components/OutfitCard";
+import { useNavigate } from "react-router-dom";
 
 const Wardrobe = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="container mx-auto">
@@ -20,14 +23,13 @@ const Wardrobe = () => {
             <Button variant="outline" size="icon">
               <Filter className="h-4 w-4" />
             </Button>
-            <Button>
+            <Button onClick={() => navigate("/add-item")}>
               <Plus className="h-4 w-4 mr-2" />
               Add Item
             </Button>
           </div>
         </div>
 
-        {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <OutfitCard
             imageUrl="https://images.unsplash.com/photo-1649972904349-6e44c42644a7"

@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import Blog from "./pages/Blog";
 import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
+import AddItem from "./pages/AddItem";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
                   <Route path="/wardrobe" element={<Wardrobe />} />
                   <Route path="/outfit" element={<Outfit />} />
                   <Route path="/create-outfit" element={<CreateOutfit />} />
+                  <Route path="/add-item" element={<AddItem />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/blog" element={<Blog />} />
