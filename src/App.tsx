@@ -23,6 +23,13 @@ import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AddItem from "./pages/AddItem";
 import Pricing from "./pages/Pricing";
+import Help from "./pages/Help";
+import About from "./pages/About";
+import Terms from "./pages/Terms";
+import Community from "./pages/Community";
+import Search from "./pages/Search";
+import ItemDetails from "./pages/ItemDetails";
+import StyleQuiz from "./pages/StyleQuiz";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +61,13 @@ const App = () => (
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/help" element={<Help />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/community" element={<Community />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/item/:id" element={<ItemDetails />} />
+                  <Route path="/style-quiz" element={<StyleQuiz />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>

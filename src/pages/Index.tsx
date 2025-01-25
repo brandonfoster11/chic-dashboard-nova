@@ -1,10 +1,37 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Wand2, ShirtIcon, ImageIcon, TrendingUp } from "lucide-react";
+import { 
+  Wand2, 
+  ShirtIcon, 
+  ImageIcon, 
+  TrendingUp, 
+  BarChart3,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from "recharts";
 
 const Index = () => {
   const navigate = useNavigate();
+
+  const analyticsData = [
+    { name: "Jan", outfits: 20 },
+    { name: "Feb", outfits: 35 },
+    { name: "Mar", outfits: 45 },
+    { name: "Apr", outfits: 30 },
+    { name: "May", outfits: 49 },
+    { name: "Jun", outfits: 60 },
+  ];
 
   return (
     <div className="container py-8 animate-fade-up">
@@ -52,46 +79,74 @@ const Index = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="space-y-4">
-            <Button 
-              className="w-full justify-start" 
-              variant="outline"
-              onClick={() => navigate("/create-outfit")}
-            >
-              <Wand2 className="mr-2 h-4 w-4" />
-              Generate New Outfit
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold">Outfit Generation Trends</h2>
+            <Button variant="outline" size="sm">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              View Details
             </Button>
-            <Button 
-              className="w-full justify-start" 
-              variant="outline"
-              onClick={() => navigate("/wardrobe")}
-            >
-              <ShirtIcon className="mr-2 h-4 w-4" />
-              Add Items to Wardrobe
-            </Button>
+          </div>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={analyticsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Line 
+                  type="monotone" 
+                  dataKey="outfits" 
+                  stroke="#9b87f5" 
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
-              <span>Generated summer casual outfit</span>
-              <span className="text-muted-foreground">2h ago</span>
+        <div className="space-y-6">
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+            <div className="space-y-4">
+              <Button 
+                className="w-full justify-start" 
+                variant="outline"
+                onClick={() => navigate("/create-outfit")}
+              >
+                <Wand2 className="mr-2 h-4 w-4" />
+                Generate New Outfit
+              </Button>
+              <Button 
+                className="w-full justify-start" 
+                variant="outline"
+                onClick={() => navigate("/wardrobe")}
+              >
+                <ShirtIcon className="mr-2 h-4 w-4" />
+                Add Items to Wardrobe
+              </Button>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span>Added 3 new items to wardrobe</span>
-              <span className="text-muted-foreground">5h ago</span>
+          </Card>
+
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span>Generated summer casual outfit</span>
+                <span className="text-muted-foreground">2h ago</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span>Added 3 new items to wardrobe</span>
+                <span className="text-muted-foreground">5h ago</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span>Updated style preferences</span>
+                <span className="text-muted-foreground">1d ago</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span>Updated style preferences</span>
-              <span className="text-muted-foreground">1d ago</span>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
