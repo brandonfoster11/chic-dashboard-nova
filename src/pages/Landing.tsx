@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -15,11 +16,11 @@ const Landing = () => {
               <span className="text-primary block">Personal Stylist</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl">
-              Experience personalized fashion recommendations powered by AI. Get outfit suggestions that match your style, mood, and occasion.
+              Discover outfits tailored to your style, instantly. No stress. Just confidence.
             </p>
             <div className="space-x-4">
               <Button size="lg" onClick={() => navigate("/register")}>
-                Get Started
+                Style Me for Free
               </Button>
               <Button size="lg" variant="outline" onClick={() => navigate("/wardrobe")}>
                 Explore Styles
@@ -37,34 +38,43 @@ const Landing = () => {
 
         {/* Features Section */}
         <div className="grid md:grid-cols-3 gap-8 py-16">
-          <div className="p-6 bg-card rounded-lg shadow-sm">
+          <div className="p-6 bg-card rounded-lg shadow-sm text-center">
+            <div className="text-3xl mb-2">🎯</div>
             <h3 className="text-xl font-semibold mb-3">AI Recommendations</h3>
-            <p className="text-muted-foreground">Get personalized outfit suggestions based on your style preferences and occasions.</p>
+            <p className="text-muted-foreground">
+              Get outfit suggestions that match your mood, season, and upcoming events.
+            </p>
           </div>
-          <div className="p-6 bg-card rounded-lg shadow-sm">
+          <div className="p-6 bg-card rounded-lg shadow-sm text-center">
+            <div className="text-3xl mb-2">🧥</div>
             <h3 className="text-xl font-semibold mb-3">Virtual Wardrobe</h3>
-            <p className="text-muted-foreground">Organize and manage your clothing items digitally for easy outfit planning.</p>
+            <p className="text-muted-foreground">
+              Upload, organize, and manage your clothing digitally for easy outfit planning.
+            </p>
           </div>
-          <div className="p-6 bg-card rounded-lg shadow-sm">
+          <div className="p-6 bg-card rounded-lg shadow-sm text-center">
+            <div className="text-3xl mb-2">📈</div>
             <h3 className="text-xl font-semibold mb-3">Style Analytics</h3>
-            <p className="text-muted-foreground">Track your style evolution and get insights about your fashion choices.</p>
+            <p className="text-muted-foreground">
+              See how your style evolves with visual insights and wardrobe trends.
+            </p>
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="py-16 text-center">
+        <div className="py-16 text-center bg-primary text-white rounded-lg">
           <div className="max-w-3xl mx-auto space-y-8">
             <h2 className="text-3xl md:text-4xl font-bold">
               Ready to Transform Your Style?
             </h2>
-            <p className="text-xl text-muted-foreground">
-              Join thousands of fashion enthusiasts who have already elevated their style with AI.
+            <p className="text-xl">
+              Join thousands of fashion lovers already styling smarter with AI.
             </p>
             <div className="space-x-4">
-              <Button size="lg" onClick={() => navigate("/register")}>
-                Start Free Trial
+              <Button size="lg" variant="secondary" onClick={() => navigate("/register")}>
+                Get Started Now
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/tour")}>
+              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-primary" onClick={() => navigate("/tour")}>
                 Take a Tour
               </Button>
             </div>
