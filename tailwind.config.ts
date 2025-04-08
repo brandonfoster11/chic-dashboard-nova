@@ -40,6 +40,24 @@ export default {
           DEFAULT: "#ffffff",
           foreground: "#1A1F2C",
         },
+        gray: {
+          60: '#BFCBD4',
+          70: '#D1D6E0',
+          80: '#E0E4EB',
+          90: '#F0F1F5',
+          100: '#FFFFFF',
+          'dark-60': '#667085',
+          'dark-70': '#4E5766',
+          'dark-80': '#37404F',
+          'dark-90': '#202531',
+          'dark-100': '#0A0E15',
+        },
+      },
+      boxShadow: {
+        neumorphic: 'inset 43px 31px 43px rgba(255,255,255,0.64), inset -26px -26px 48px rgba(13,39,80,0.16)',
+        'neumorphic-button': '4px 4px 10px rgba(0,0,0,0.06), -4px -4px 10px rgba(255,255,255,0.8), inset 1px 1px 1px rgba(255,255,255,0.5)',
+        'neumorphic-card': '8px 8px 16px rgba(0,0,0,0.05), -8px -8px 16px rgba(255,255,255,0.8)',
+        'neumorphic-inset': 'inset 4px 4px 8px rgba(0,0,0,0.05), inset -4px -4px 8px rgba(255,255,255,0.8)',
       },
       keyframes: {
         "fade-up": {

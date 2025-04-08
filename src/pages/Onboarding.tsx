@@ -1,14 +1,15 @@
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { NeumorphicCard } from "@/components/ui/neumorphic-card";
+import { NeumorphicButton } from "@/components/ui/neumorphic-button";
+import { motion, AnimatePresence } from "framer-motion";
 
 const onboardingSteps = [
   {
@@ -206,6 +207,11 @@ const Onboarding = () => {
     }
 
     if (currentStep === totalSteps) {
+      toast({
+        title: "Setup complete!",
+        description: "Your profile has been created successfully.",
+        duration: 3000,
+      });
       navigate("/tour");
     } else {
       setCurrentStep(currentStep + 1);
@@ -219,6 +225,11 @@ const Onboarding = () => {
   };
 
   const handleSkip = () => {
+    toast({
+      title: "Setup skipped",
+      description: "You can always complete your profile later.",
+      duration: 3000,
+    });
     navigate("/tour");
   };
 
@@ -234,81 +245,154 @@ const Onboarding = () => {
     return null;
   }
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    },
+    exit: { 
+      opacity: 0,
+      transition: { duration: 0.2 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.4 } },
+    exit: { y: -20, opacity: 0, transition: { duration: 0.2 } }
+  };
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <Progress value={progress} className="mb-4" />
-          <CardTitle className="text-2xl font-bold text-center">
-            {currentStepData.title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-lg text-center mb-8">{currentStepData.question}</div>
-
-          {currentStepData.type === "radio" && (
-            <RadioGroup
-              value={data[currentStepData.key as keyof typeof data] as string}
-              onValueChange={(value) => updateData(currentStepData.key as keyof typeof data, value)}
-              className="space-y-3"
+    <div className="min-h-screen bg-gray-90 flex items-center justify-center p-4">
+      <NeumorphicCard variant="elevated" hover="none" padding="lg" className="w-full max-w-2xl">
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <Progress value={progress} className="h-2 bg-gray-80" />
+            <motion.h1 
+              className="text-2xl font-bold text-center text-gray-dark-90"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
             >
-              {currentStepData.options.map((option) => (
-                <div key={option.value} className="flex items-center space-x-3">
-                  <RadioGroupItem value={option.value} id={option.value} />
-                  <Label htmlFor={option.value}>{option.label}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          )}
-
-          {currentStepData.type === "checkbox" && (
-            <div className="space-y-3">
-              {currentStepData.options.map((option) => (
-                <div key={option.value} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={option.value}
-                    checked={(data[currentStepData.key as keyof typeof data] as string[])?.includes(option.value)}
-                    onCheckedChange={(checked) => {
-                      const currentValues = (data[currentStepData.key as keyof typeof data] as string[]) || [];
-                      const newValues = checked
-                        ? [...currentValues, option.value]
-                        : currentValues.filter((value) => value !== option.value);
-                      updateData(currentStepData.key as keyof typeof data, newValues);
-                    }}
-                  />
-                  <Label htmlFor={option.value}>{option.label}</Label>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {currentStepData.type === "input" && (
-            <Input
-              value={data[currentStepData.key as keyof typeof data] as string || ""}
-              onChange={(e) => updateData(currentStepData.key as keyof typeof data, e.target.value)}
-              placeholder="Enter your preferred brands"
-            />
-          )}
-
-          <div className="flex justify-between pt-6">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentStep === 1}
-            >
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            <Button variant="ghost" onClick={handleSkip}>
-              Skip
-            </Button>
-            <Button onClick={handleNext}>
-              {currentStep === totalSteps ? "Finish" : "Next"}
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
+              {currentStepData.title}
+            </motion.h1>
           </div>
-        </CardContent>
-      </Card>
+          
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-8"
+            >
+              <div className="text-lg text-center text-gray-dark-80">{currentStepData.question}</div>
+
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="space-y-6"
+              >
+                {currentStepData.type === "radio" && (
+                  <RadioGroup
+                    value={data[currentStepData.key as keyof typeof data] as string}
+                    onValueChange={(value) => updateData(currentStepData.key as keyof typeof data, value)}
+                    className="space-y-3"
+                  >
+                    {currentStepData.options.map((option, index) => (
+                      <motion.div 
+                        key={option.value} 
+                        className="flex items-center space-x-3 p-3 bg-gray-100 rounded-lg hover:bg-gray-80 transition-colors"
+                        variants={itemVariants}
+                        custom={index}
+                      >
+                        <RadioGroupItem value={option.value} id={option.value} />
+                        <Label htmlFor={option.value} className="w-full cursor-pointer">{option.label}</Label>
+                      </motion.div>
+                    ))}
+                  </RadioGroup>
+                )}
+
+                {currentStepData.type === "checkbox" && (
+                  <div className="space-y-3">
+                    {currentStepData.options.map((option, index) => (
+                      <motion.div 
+                        key={option.value} 
+                        className="flex items-center space-x-3 p-3 bg-gray-100 rounded-lg hover:bg-gray-80 transition-colors"
+                        variants={itemVariants}
+                        custom={index}
+                      >
+                        <Checkbox
+                          id={option.value}
+                          checked={(data[currentStepData.key as keyof typeof data] as string[])?.includes(option.value)}
+                          onCheckedChange={(checked) => {
+                            const currentValues = (data[currentStepData.key as keyof typeof data] as string[]) || [];
+                            const newValues = checked
+                              ? [...currentValues, option.value]
+                              : currentValues.filter((value) => value !== option.value);
+                            updateData(currentStepData.key as keyof typeof data, newValues);
+                          }}
+                        />
+                        <Label htmlFor={option.value} className="w-full cursor-pointer">{option.label}</Label>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                {currentStepData.type === "input" && (
+                  <motion.div variants={itemVariants}>
+                    <Input
+                      value={data[currentStepData.key as keyof typeof data] as string || ""}
+                      onChange={(e) => updateData(currentStepData.key as keyof typeof data, e.target.value)}
+                      placeholder="Enter your preferred brands"
+                      className="bg-gray-100 border-gray-80"
+                    />
+                  </motion.div>
+                )}
+              </motion.div>
+
+              <motion.div 
+                className="flex justify-between pt-6"
+                variants={itemVariants}
+              >
+                <NeumorphicButton
+                  variant="neumorphic"
+                  onClick={handleBack}
+                  disabled={currentStep === 1}
+                  withMotion
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Back
+                </NeumorphicButton>
+                
+                <NeumorphicButton 
+                  variant="outline" 
+                  onClick={handleSkip}
+                >
+                  Skip
+                </NeumorphicButton>
+                
+                <NeumorphicButton 
+                  variant="neumorphic" 
+                  onClick={handleNext}
+                  withMotion
+                >
+                  {currentStep === totalSteps ? "Finish" : "Next"}
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </NeumorphicButton>
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </NeumorphicCard>
     </div>
   );
 };

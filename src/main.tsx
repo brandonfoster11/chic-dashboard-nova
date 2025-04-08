@@ -1,12 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { OnboardingProvider } from "@/context/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OutfitProvider } from "@/contexts/OutfitContext";
 import { QueryProvider } from "@/lib/react-query/QueryProvider";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import App from "./App";
 import './index.css'
 
@@ -19,7 +19,7 @@ root.render(
   <StrictMode>
     <QueryProvider>
       <BrowserRouter>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider>
           <AuthProvider>
             <OutfitProvider>
               <TooltipProvider>

@@ -31,9 +31,9 @@ const App = () => (
   <>
     <Toaster />
     <Sonner />
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-90 text-gray-dark-80 font-sans antialiased">
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 px-6 lg:px-12 pt-16 pb-32 space-y-12">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />

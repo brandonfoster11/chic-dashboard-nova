@@ -11,6 +11,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { NeumorphicCard } from "@/components/ui/neumorphic-card";
+import { NeumorphicButton } from "@/components/ui/neumorphic-button";
+import { motion } from "framer-motion";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,7 +37,16 @@ const Login = () => {
     if (emailInput) {
       emailInput.focus();
     }
-  }, []);
+    
+    // Load remembered email if it exists
+    const rememberedEmail = localStorage.getItem('email');
+    const rememberMe = localStorage.getItem('rememberMe') === 'true';
+    
+    if (rememberedEmail && rememberMe) {
+      form.setValue('email', rememberedEmail);
+      form.setValue('rememberMe', true);
+    }
+  }, [form]);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -54,66 +66,55 @@ const Login = () => {
       }
       
       await login(values.email, values.password);
-      
       toast({
         title: "Login successful",
         description: "Welcome back to StyleAI!",
-        variant: "default",
+        duration: 3000,
       });
-      
       navigate("/dashboard");
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to login";
-      setAuthError(errorMessage);
-      
-      toast({
-        title: "Login failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
+    } catch (err) {
+      setAuthError("Invalid email or password. Please try again.");
+      console.error(err);
     }
   };
 
-  // Check for remembered email on component mount
-  useEffect(() => {
-    const rememberMe = localStorage.getItem('rememberMe') === 'true';
-    const rememberedEmail = localStorage.getItem('email');
-    
-    if (rememberMe && rememberedEmail) {
-      form.setValue('email', rememberedEmail);
-      form.setValue('rememberMe', true);
-    }
-  }, [form]);
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-lg shadow-lg">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto flex flex-col items-center justify-center px-4 py-12"
+    >
+      <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold">Welcome back</h2>
-          <p className="text-muted-foreground mt-2">Sign in to your account</p>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
+          <p className="mt-2 text-gray-dark-60">
+            Sign in to your account to continue
+          </p>
         </div>
-
-        {authError && (
-          <Alert variant="destructive" role="alert">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{authError}</AlertDescription>
-          </Alert>
-        )}
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">
-            <div className="space-y-4">
+        
+        <NeumorphicCard variant="elevated" hover="none" padding="lg" animate>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {authError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{authError}</AlertDescription>
+                </Alert>
+              )}
+              
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email address</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter your email"
+                        placeholder="you@example.com"
                         type="email"
                         autoComplete="email"
+                        className="bg-gray-100 border-gray-80"
                         {...field}
                       />
                     </FormControl>
@@ -121,7 +122,7 @@ const Login = () => {
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={form.control}
                 name="password"
@@ -131,32 +132,30 @@ const Login = () => {
                     <FormControl>
                       <div className="relative">
                         <Input
-                          placeholder="Enter your password"
+                          placeholder="••••••••"
                           type={showPassword ? "text" : "password"}
                           autoComplete="current-password"
+                          className="bg-gray-100 border-gray-80 pr-10"
                           {...field}
                         />
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
                           onClick={togglePasswordVisibility}
-                          aria-label={showPassword ? "Hide password" : "Show password"}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3"
                         >
                           {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
+                            <EyeOff className="h-4 w-4 text-gray-dark-60" />
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4 text-gray-dark-60" />
                           )}
-                        </Button>
+                        </button>
                       </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
+              
               <div className="flex items-center justify-between">
                 <FormField
                   control={form.control}
@@ -170,38 +169,47 @@ const Login = () => {
                       />
                       <label
                         htmlFor="rememberMe"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        className="text-sm font-medium leading-none cursor-pointer"
                       >
                         Remember me
                       </label>
                     </div>
                   )}
                 />
+                
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm font-medium text-primary hover:underline"
                 >
                   Forgot password?
                 </Link>
               </div>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
-        </Form>
-
-        <div className="text-center mt-4">
-          <p className="text-sm text-muted-foreground">
+              
+              <div className="pt-2">
+                <NeumorphicButton
+                  type="submit"
+                  className="w-full"
+                  variant="neumorphic"
+                  disabled={isLoading}
+                  withMotion
+                >
+                  {isLoading ? "Signing in..." : "Sign in"}
+                </NeumorphicButton>
+              </div>
+            </form>
+          </Form>
+        </NeumorphicCard>
+        
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-dark-60">
             Don't have an account?{" "}
-            <Link to="/register" className="text-primary hover:underline">
+            <Link to="/register" className="font-medium text-primary hover:underline">
               Sign up
             </Link>
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
