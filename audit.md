@@ -18,6 +18,9 @@ The goal is to prepare StyleAI for production-readiness, scalability, and AI-int
 
 ## 📄 Pages: Full Review
 
+**Design Upgrade Overview:**
+Every page should move toward a unified visual language that embraces soft depth (via neumorphism), elegant transitions (via Framer Motion), and tonal contrast (via the new grayscale palette). Typography, spacing, layout rhythm, and animation consistency should be applied to all views.
+
 ### About.tsx
 - ✅ Clean layout, accessible structure, responsive grid
 - ❌ No mobile spacing, missing aria-labels, CTA button does not route
@@ -38,6 +41,12 @@ The goal is to prepare StyleAI for production-readiness, scalability, and AI-int
 - ❌ Static data, no loading states, not personalized
 - 🔧 Fetch data using TanStack Query with caching; add `SkeletonCard` loading placeholders for widgets; pull wardrobe stats per authenticated user via Supabase RPC or `from('outfits').count()`
 
+**Visual Enhancements:**
+- Cards with neumorphic drop shadow, padded `p-6` and rounded-xl styling
+- Animate card entrance with Framer Motion (staggered fade/scale)
+- Typography: `text-xl font-semibold` for titles, `text-sm text-gray-500` for metadata
+- Group dashboard metrics in a responsive grid with `gap-8` and mobile stacking
+
 ### ForgotPassword.tsx
 - ✅ Zod validation, success state, alert component
 - ❌ No keyboard focus, no error mapping, long redirect delay
@@ -48,10 +57,21 @@ The goal is to prepare StyleAI for production-readiness, scalability, and AI-int
 - ❌ No search, no ARIA headings, links not actionable
 - 🔧 Add a `CommandBar`-style fuzzy search with results scroll; wrap questions in a `<nav aria-labelledby="faq-heading">` container; ensure links have `href` or actionable buttons with `aria-label`
 
+**Visual Enhancements:**
+- Use soft card backgrounds (`bg-gray-90`) with padding and shadows
+- Animate accordion open/close with spring transitions
+- Highlight selected FAQ item with `ring-2 ring-primary` on focus or active
+
 ### Landing.tsx
 - ✅ Strong visual hierarchy, grid-based features, clean CTA
 - ❌ Icons missing, duplicate copy, no animation or meta tags
-- 🔧 Use Lucide icons or Heroicons; reduce copy blocks to scannable highlights; use Framer Motion for fade/scale entrance; add meta description, OG image, and Twitter card support.
+- 🔧 Use Lucide icons or Heroicons; reduce copy blocks to scannable highlights; use Framer Motion for fade/scale entrance; add meta description, OG image, and Twitter card support
+
+**Visual Enhancements:**
+- Use background: `bg-gray-90` (new palette) and contrast headings with `text-gray-100`
+- Add neumorphic call-to-action section with glow hover on primary button
+- Typography upgrade: headline `text-4xl font-bold`, body `text-lg text-gray-600`
+- Layout: center with `max-w-3xl mx-auto pt-20 pb-32 px-6`, add vertical rhythm using `space-y-12`.
 
 **Suggested Animation Example:**
 ```tsx
@@ -74,7 +94,12 @@ import { motion } from 'framer-motion';
 ### Onboarding.tsx
 - ✅ Context-based stepper, progress bar, flexible config
 - ❌ No validation per step, abrupt transitions, no save
-- 🔧 Add per-step schema validation via `zod` switch or key-by-step object map; animate transitions using `FramerMotion`; store answers in localStorage or Supabase `profiles.meta` column.
+- 🔧 Add per-step schema validation via `zod` switch or key-by-step object map; animate transitions using `FramerMotion`; store answers in localStorage or Supabase `profiles.meta` column
+
+**Visual Enhancements:**
+- Style steps with elevated neumorphic containers and glow progress markers
+- Improve spacing with `space-y-8` and consistent margins between steps
+- Use animated entrance/exit between steps with stagger delay for inputs.
 
 **Framer Motion Stepper Example:**
 ```tsx
@@ -251,3 +276,4 @@ This will visually animate the bar as the onboarding progresses.
 - 🔧 Add `tests/__mocks__` for supabase, openai, react-query; validate form edge cases; include CI runner for Vitest
 
 ---
+
