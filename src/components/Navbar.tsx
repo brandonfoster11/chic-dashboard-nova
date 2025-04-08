@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../hooks/use-auth';
 import { Button } from '../components/ui/button';
@@ -9,13 +9,21 @@ import { useNavigate } from 'react-router-dom';
 
 export function Navbar() {
   const { theme, toggleTheme } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isLoading } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/login');
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
+
+  if (isLoading) {
+    return <div className="h-16" />;
+  }
 
   return (
     <nav className="border-b bg-background">
