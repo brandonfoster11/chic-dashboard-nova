@@ -1,11 +1,71 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Plus } from "lucide-react";
-import { OutfitCard } from "@/components/OutfitCard";
+import { Search, Filter, Plus, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { WardrobeItemCard } from "@/components/WardrobeItem";
+import { useWardrobeItems, useWardrobeStats, useRemoveWardrobeItem } from "@/hooks/use-wardrobe";
+import { WardrobeFilters, WardrobeItem } from "@/services/wardrobe/types";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const Wardrobe = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<WardrobeFilters>({});
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
+  
+  // Get wardrobe items with filters
+  const { 
+    data: wardrobeItems, 
+    isLoading: isLoadingItems,
+    isError: isItemsError,
+    refetch: refetchItems
+  } = useWardrobeItems({
+    ...filters,
+    search: searchQuery.length > 0 ? searchQuery : undefined
+  });
+  
+  // Get wardrobe stats
+  const { 
+    data: wardrobeStats,
+    isLoading: isLoadingStats
+  } = useWardrobeStats();
+  
+  // Delete item mutation
+  const removeItem = useRemoveWardrobeItem();
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleEditItem = (item: WardrobeItem) => {
+    navigate(`/edit-item/${item.id}`);
+  };
+
+  const handleDeleteItem = (item: WardrobeItem) => {
+    setDeleteItemId(item.id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteItemId) return;
+    
+    try {
+      await removeItem.mutateAsync(deleteItemId);
+      toast.success("Item deleted successfully");
+      setDeleteItemId(null);
+    } catch (error) {
+      toast.error("Failed to delete item");
+      console.error(error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -18,6 +78,8 @@ const Wardrobe = () => {
               <Input
                 placeholder="Search items..."
                 className="pl-10 w-[200px] md:w-[300px]"
+                value={searchQuery}
+                onChange={handleSearchChange}
               />
             </div>
             <Button variant="outline" size="icon">
@@ -30,29 +92,97 @@ const Wardrobe = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <OutfitCard
-            imageUrl="https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
-            title="Casual Collection"
-            description="Everyday comfort meets style"
-          />
-          <OutfitCard
-            imageUrl="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"
-            title="Work Essentials"
-            description="Professional attire for success"
-          />
-          <OutfitCard
-            imageUrl="https://images.unsplash.com/photo-1581092795360-fd1ca04f0952"
-            title="Evening Wear"
-            description="Statement pieces for special occasions"
-          />
-          <OutfitCard
-            imageUrl="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"
-            title="Accessories"
-            description="Complete your look"
-          />
-        </div>
+        {/* Wardrobe Stats Summary */}
+        {!isLoadingStats && wardrobeStats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-card rounded-lg p-4 shadow-sm">
+              <h3 className="text-sm font-medium text-muted-foreground">Total Items</h3>
+              <p className="text-2xl font-bold">{wardrobeStats.totalItems}</p>
+            </div>
+            <div className="bg-card rounded-lg p-4 shadow-sm">
+              <h3 className="text-sm font-medium text-muted-foreground">Categories</h3>
+              <p className="text-2xl font-bold">{wardrobeStats.categories.length}</p>
+            </div>
+            <div className="bg-card rounded-lg p-4 shadow-sm">
+              <h3 className="text-sm font-medium text-muted-foreground">Favorites</h3>
+              <p className="text-2xl font-bold">{wardrobeStats.favorites.length}</p>
+            </div>
+            <div className="bg-card rounded-lg p-4 shadow-sm">
+              <h3 className="text-sm font-medium text-muted-foreground">Recently Added</h3>
+              <p className="text-2xl font-bold">{wardrobeStats.recentlyAdded.length}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {isLoadingItems && (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg">Loading your wardrobe...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {isItemsError && (
+          <div className="text-center py-12">
+            <p className="text-destructive mb-4">Failed to load wardrobe items</p>
+            <Button onClick={() => refetchItems()}>Try Again</Button>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoadingItems && wardrobeItems && wardrobeItems.length === 0 && (
+          <div className="text-center py-12 border-2 border-dashed rounded-lg">
+            <h3 className="text-xl font-medium mb-2">Your wardrobe is empty</h3>
+            <p className="text-muted-foreground mb-6">
+              Start adding items to your wardrobe to get personalized outfit recommendations
+            </p>
+            <Button onClick={() => navigate("/add-item")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Your First Item
+            </Button>
+          </div>
+        )}
+
+        {/* Wardrobe Items Grid */}
+        {!isLoadingItems && wardrobeItems && wardrobeItems.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {wardrobeItems.map((item) => (
+              <WardrobeItemCard
+                key={item.id}
+                item={item}
+                onEdit={handleEditItem}
+                onDelete={handleDeleteItem}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteItemId} onOpenChange={(open) => !open && setDeleteItemId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this item? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteItemId(null)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              disabled={removeItem.isPending}
+            >
+              {removeItem.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

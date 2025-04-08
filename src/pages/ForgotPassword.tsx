@@ -3,17 +3,39 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { resetPasswordSchema, ResetPasswordFormValues } from "@/lib/validations/auth";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState("");
   const navigate = useNavigate();
+  const { resetPassword, isLoading } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Simulate sending reset email
-    toast.success("Reset link sent to your email");
-    navigate("/login");
+  const form = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const onSubmit = async (values: ResetPasswordFormValues) => {
+    try {
+      setAuthError(null);
+      await resetPassword(values.email);
+      setIsSuccess(true);
+      toast.success("Reset link sent to your email");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Failed to send reset link");
+    }
   };
 
   return (
@@ -26,20 +48,49 @@ const ForgotPassword = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+        {authError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{authError}</AlertDescription>
+          </Alert>
+        )}
+
+        {isSuccess && (
+          <Alert>
+            <AlertDescription>
+              Reset link sent! Please check your email.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email address</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter your email"
+                      type="email"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <Button type="submit" className="w-full">
-            Send Reset Link
-          </Button>
-        </form>
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isLoading || isSuccess}
+            >
+              {isLoading ? "Sending..." : "Send Reset Link"}
+            </Button>
+          </form>
+        </Form>
 
         <div className="text-center">
           <Button variant="link" onClick={() => navigate("/login")}>
