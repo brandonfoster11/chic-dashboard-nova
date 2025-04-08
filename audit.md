@@ -1,416 +1,253 @@
-{/* 4-7-25 */}
-## Chic Dashboard Nova: Full Codebase Audit Report
+## StyleAI: Full Codebase & UX Audit Report
 
 ### Overview
+This report contains a comprehensive audit of the StyleAI GitHub repository across all pages, components, hooks, libraries, and architectural layers. The audit was conducted page-by-page and file-by-file to support both engineering implementation and design refinement.
 
-This document outlines a comprehensive technical, design, and UX audit of the `chic-dashboard-nova` repository. It includes detailed findings and recommendations intended for the Windsurf and Lovable engineering/design teams to guide all revisions. The focus spans across architecture, code quality, accessibility, design system compliance, layout behavior, and implementation gaps.
+The goal is to prepare StyleAI for production-readiness, scalability, and AI-integrated wardrobe personalization. This document is intended to be implementation-ready for integration into Windsurf task management.
 
 ---
 
 ## ✅ General Strengths
 
-- **Modern stack**: Uses Vite, React, TypeScript, TailwindCSS, and ShadCN.
-- **Modular structure**: Clean separation of concerns via `components`, `pages`, `context`, etc.
-- **Strong design consistency**: Reusable components, design tokens, and Radix UI patterns are used throughout.
+- Modern stack: React, TypeScript, Vite, ShadCN UI, TanStack Query, TailwindCSS, Zod
+- Strong architecture: Contexts, hooks, services, and reusable components
+- Clean styling: Utility-first design with consistent spacing and motion readiness
+- Modular file system: Pages, components, and logic are properly scoped
 
 ---
 
-## 🎨 UI Design Audit — Layout, Composition & Visual Identity
+## 📄 Pages: Full Review
 
-### Brand Identity Consistency
+### About.tsx
+- ✅ Clean layout, accessible structure, responsive grid
+- ❌ No mobile spacing, missing aria-labels, CTA button does not route
+- 🔧 Add `onClick` handler for CTA, use semantic regions like `<section>` with ARIA roles for better accessibility, and apply consistent spacing with Tailwind utilities like `p-6` or `space-y-4`
 
-- ✅ Typography is consistent across most views using Tailwind base styles
-- ❌ No visual representation of brand (e.g., logo, typography rules, brand palette enforcement)
-- 🔧 Recommendation: Define a design token layer or Tailwind theme override to establish brand hierarchy across headings, colors, spacing, and form elements
+### AddItem.tsx
+- ✅ Zod + RHF validation, file input, async mutation
+- ❌ No image upload, error toasts, or preview
+- 🔧 Integrate Supabase Bucket image upload (e.g., bucket: `wardrobe-items/`), use `URL.createObjectURL()` for preview, and add toast notifications for upload success/failure with fallback image states for failures
 
-### Layout Responsiveness
+### CreateOutfit.tsx
+- ✅ Chat-based UX, context-aware AI, isGenerating logic
+- ❌ No error fallback, no scroll-to-bottom, missing CTA after generation
+- 🔧 Add `react-toast` or `useToast()` for error feedback, implement auto-scroll to new content with a scroll anchor or `ref`, and insert a `Save Outfit` and `Download` button after generation
 
-- ✅ Grid systems (`grid-cols-*`) adapt well in wardrobe, dashboard, and landing
-- ❌ Missing full mobile navigation / hamburger menus in `Navbar.tsx`
-- ❌ No sticky headers/footers for key pages like Dashboard or CreateOutfit
-- 🔧 Add `position: sticky` headers where applicable, especially in onboarding or AI chat flows
+### Dashboard.tsx
+- ✅ Responsive cards, stat layout, recent activity placeholder
+- ❌ Static data, no loading states, not personalized
+- 🔧 Fetch data using TanStack Query with caching; add `SkeletonCard` loading placeholders for widgets; pull wardrobe stats per authenticated user via Supabase RPC or `from('outfits').count()`
 
-### Visual Hierarchy & Section Spacing
+### ForgotPassword.tsx
+- ✅ Zod validation, success state, alert component
+- ❌ No keyboard focus, no error mapping, long redirect delay
+- 🔧 Auto-focus first field on mount, add ARIA live region for feedback, shorten redirect to 3–5s, and use form-wide error state to surface auth errors from Supabase
 
-- ✅ Most pages follow a vertical stack pattern with clear sections
-- ❌ Several views (e.g., Terms, Privacy, Register) lack consistent vertical rhythm
-- 🔧 Use `space-y-8` or `gap-8` across sections for baseline alignment
-- ❌ Repeated content blocks (e.g., cards, FAQs, onboarding steps) do not have consistent spacing or heading sizes
-- 🔧 Refactor spacing and heading structure to follow a defined type scale (e.g., H1 → 36px, H2 → 24px, etc.)
+### Help.tsx
+- ✅ Clean accordion UI for FAQ, clear sections
+- ❌ No search, no ARIA headings, links not actionable
+- 🔧 Add a `CommandBar`-style fuzzy search with results scroll; wrap questions in a `<nav aria-labelledby="faq-heading">` container; ensure links have `href` or actionable buttons with `aria-label`
 
-### Empty State Handling
+### Landing.tsx
+- ✅ Strong visual hierarchy, grid-based features, clean CTA
+- ❌ Icons missing, duplicate copy, no animation or meta tags
+- 🔧 Use Lucide icons or Heroicons; reduce copy blocks to scannable highlights; use Framer Motion for fade/scale entrance; add meta description, OG image, and Twitter card support.
 
-- ❌ Pages like `Wardrobe`, `Dashboard`, and `Outfit` lack any visual indication when no content is available
-- 🔧 Add illustrations or call-to-actions (CTA) when empty to encourage interaction
-- 🔧 Use simple Lottie animations or SVGs with copy like: "You haven't added any outfits yet"
-
-#### ✅ Example Empty State
-
+**Suggested Animation Example:**
 ```tsx
-{items.length === 0 && (
-  <div className="text-center py-20">
-    <img src="/empty-wardrobe.svg" alt="No items" className="mx-auto w-32 mb-4" />
-    <p className="text-muted-foreground text-sm">You haven’t added anything to your wardrobe yet.</p>
-    <Button onClick={() => navigate("/add-item")} className="mt-4">Add First Item</Button>
-  </div>
-)}
+import { motion } from 'framer-motion';
+
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6 }}
+>
+  <h1 className="text-4xl font-bold">Welcome to StyleAI</h1>
+</motion.div>
 ```
 
-### Card Design & Consistency
+### Login.tsx
+- ✅ Strong validation, disabled loading state, clean inputs
+- ❌ No toast on login, no password reveal, no "remember me"
+- 🔧 Integrate `useToast()` on login success/failure; add toggle to input `type=password` visibility; implement a `remember me` checkbox to persist session in localStorage
 
-- ✅ `OutfitCard`, `StyleCard`, `QuickAction` are solid starting points
-- ❌ Cards have varying paddings and inconsistent use of hover states
-- 🔧 Standardize card styles via shared card padding, border radius, and elevation (shadow) values
+### Onboarding.tsx
+- ✅ Context-based stepper, progress bar, flexible config
+- ❌ No validation per step, abrupt transitions, no save
+- 🔧 Add per-step schema validation via `zod` switch or key-by-step object map; animate transitions using `FramerMotion`; store answers in localStorage or Supabase `profiles.meta` column.
 
-### Accessibility & Color Contrast
-
-- ✅ Text generally readable
-- ❌ Theme toggle sometimes causes flash of incorrect theme (due to `next-themes` + Vite issue)
-- ❌ No focus indicators on links or buttons
-- ❌ Icon-only buttons (like Filter) lack `aria-label`s
-- 🔧 Add global focus styles, ensure 4.5:1 contrast ratio minimum, and add accessible descriptions to all non-text UI elements
-
-#### ✅ Tailwind Focus Styles in Global CSS or Tailwind Config
-
+**Framer Motion Stepper Example:**
 ```tsx
-<Button className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-  Action
-</Button>
-```
+import { motion, AnimatePresence } from 'framer-motion';
 
-#### ✅ Example ThemeContext Without `next-themes`
-
-```tsx
-// ThemeContext.tsx
-export const ThemeContext = createContext();
-
-export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-```
-
-Then in your navbar or toggle:
-
-```tsx
-const { theme, setTheme } = useContext(ThemeContext);
-<Button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-  {theme === "dark" ? "Light Mode" : "Dark Mode"}
-</Button>
-```
-
-### Navigation UX
-
-- ❌ Mobile users have no access to nav links — hidden in `md:flex`
-- ❌ Navigation options do not reflect login state
-- 🔧 Implement responsive dropdown/hamburger and update links contextually based on authentication state
-
-#### ✅ Example: Mobile Navbar using `DropdownMenu`
-
-```tsx
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu"
-import { Menu } from "lucide-react"
-
-<DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button variant="ghost" size="icon" aria-label="Open menu">
-      <Menu className="h-5 w-5" />
-    </Button>
-  </DropdownMenuTrigger>
-  <DropdownMenuContent align="end">
-    <DropdownMenuItem onClick={() => navigate("/dashboard")}>Dashboard</DropdownMenuItem>
-    <DropdownMenuItem onClick={() => navigate("/wardrobe")}>Wardrobe</DropdownMenuItem>
-    <DropdownMenuItem onClick={() => navigate("/profile")}>Profile</DropdownMenuItem>
-    <DropdownMenuItem onClick={() => navigate("/logout")}>Logout</DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
-```
-
-#### ✅ Sticky Header Example
-
-```tsx
-<header className="sticky top-0 z-30 bg-background border-b p-4 shadow-sm">
-  <h1 className="text-xl font-semibold">Create an Outfit</h1>
-</header>
-```
-
-### Animation & Microinteractions
-
-- ✅ Minimal use of `animate-fade-up` on modals
-- ✅ Framer Motion ready for advanced transitions
-- ❌ No visual feedback for onboarding progress transitions, step changes, or outfit generation loading
-- 🔧 Introduce Framer Motion or `@headlessui/transition` to add fade/slide animation to:
-
-#### ✅ Example Framer Motion Wrapper Component
-```tsx
-import { motion } from "framer-motion";
-
-export const FadeSlideWrapper = ({ children }: { children: React.ReactNode }) => (
+<AnimatePresence mode="wait">
   <motion.div
-    initial={{ opacity: 0, y: 12 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: 12 }}
-    transition={{ duration: 0.3, ease: "easeOut" }}
+    key={step}
+    initial={{ opacity: 0, x: 50 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -50 }}
+    transition={{ duration: 0.4 }}
   >
-    {children}
+    {stepComponent}
   </motion.div>
-);
+</AnimatePresence>
 ```
 
-#### ✅ Example Usage in StyleQuiz or Onboarding Steps
+### Outfit.tsx
+- ✅ Responsive grid, clear card structure
+- ❌ Static data, no search/filter logic, no empty state
+- 🔧 Fetch outfit list via Supabase with user filtering; add filter by `tag` or `occasion`; show an empty state with illustration and `Add First Outfit` CTA
+
+### Privacy.tsx
+- ✅ Semantic HTML and layout
+- ❌ No contact email, no TOC or timestamp
+- 🔧 Include a "last updated" date at the top; generate Table of Contents dynamically if Markdown; add a support email at the bottom
+
+### Pricing.tsx
+- ✅ Highlighted "Pro" plan, icon usage, responsive layout
+- ❌ Plan clicks not tracked, no animation, no payment integration
+- 🔧 Use analytics to track click-throughs; animate plan selection; wire checkout session via Stripe and save plan metadata to Supabase user profile
+
+---
+
+## 🧩 Components Audit
+
+### Footer.tsx
+- ✅ Logical link sections, grid layout
+- ❌ Buttons used instead of `<Link>`, no `target="_blank"` on socials
+- 🔧 Use `Link` from `react-router-dom` for SPA routing and `<a target="_blank" rel="noopener noreferrer">` for external links; fix semantic roles
+
+### ImageUpload.tsx
+- ✅ Dropzone logic, validation, modular
+- ❌ No image previews, no keyboard nav, no aria labels
+- 🔧 Show previews using `URL.createObjectURL`; allow keyboard focus with `tabIndex`; add `role="button"` and `aria-label="Upload an image"`
+
+### Navbar.tsx
+- ✅ Role-based links, logout, dark mode
+- ❌ Uses next-themes (bad for Vite), no mobile nav, no dropdown
+- 🔧 Replace `next-themes` with context-based theme; add mobile `DropdownMenu` with conditional rendering based on auth; use `aria-expanded` for menu button
+
+### OutfitCard.tsx
+- ✅ Clean structure, zoom hover, alt text
+- ❌ No routing, no actions, no accessibility
+- 🔧 Wrap card in `<Link to={/outfit/${id}}>`; add action buttons (like, save, share); include `aria-label="Outfit Card"` and keyboard shortcuts for favoriting
+
+### QuickAction.tsx
+- ✅ Icon-based button card, type-safe props
+- ❌ No loading state, no a11y labels
+- 🔧 Add `isLoading` spinner prop; use `aria-label` for each quick action button and describe the shortcut
+
+### ProgressBar.tsx
+- ✅ Used in onboarding, clean bar logic
+- ❌ Not fully animated
+- 🔧 Animate using `FramerMotion` `layout` prop or progress with `initial/animate`; fallback to `<progress>` with screenreader text.
+
+**Suggested Implementation Example:**
 ```tsx
-<FadeSlideWrapper>
-  <StepContent step={currentStep} />
-</FadeSlideWrapper>
+import { motion } from 'framer-motion';
+
+<motion.div
+  className="h-2 bg-primary rounded-full"
+  initial={{ width: 0 }}
+  animate={{ width: `${progress}%` }}
+  transition={{ duration: 0.4, ease: 'easeInOut' }}
+/>
 ```
-
-  - Onboarding quiz steps
-  - StyleQuiz submissions
-  - Outfit AI replies
-
-### Iconography
-
-- ✅ Lucide icons are used throughout for buttons and inline visuals
-- ❌ Feature sections on `Landing.tsx` lack icons
-- 🔧 Add icons for alignment, scannability, and to match other visual patterns in dashboard/cards
-
-### Button Styles
-
-- ✅ Buttons use design system (`variant`, `size`, `asChild`)
-- ❌ Too many flat link-style buttons are being used in places requiring primary attention (e.g., Footer, Help, Tour)
-- 🔧 Follow a clear button hierarchy: `primary` → `secondary` → `ghost` or `link`
-
-### Skeleton Loaders
-
-- ✅ Improve perceived performance while data is loading
-- ❌ Currently missing on Dashboard, Outfit, and Wardrobe pages
-- 🔧 Add skeletons to reduce layout shift and reassure users during async fetches
-
-#### ✅ Example SkeletonCard Component
-
-```tsx
-// components/SkeletonCard.tsx
-export const SkeletonCard = () => (
-  <div className="animate-pulse space-y-4 rounded-lg bg-muted p-4">
-    <div className="h-32 bg-muted-foreground/30 rounded-md" />
-    <div className="h-4 bg-muted-foreground/30 w-3/4 rounded" />
-    <div className="h-4 bg-muted-foreground/30 w-1/2 rounded" />
-  </div>
-);
-```
-
-#### ✅ Example Usage
-
-```tsx
-{isLoading
-  ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-  : wardrobeItems.map((item) => <OutfitCard {...item} key={item.id} />)}
-```
+This will visually animate the bar as the onboarding progresses.
 
 ---
 
-## 🔍 Navbar Analysis — Critical UX Concern
+## 🧠 Hooks
 
-### Problem Summary:
+### use-auth.ts
+- ✅ Listens to Supabase events, returns clean login/logout
+- ❌ No toast or global error UI
+- 🔧 Wrap in `AuthProvider` and surface state via `useToast()` on error; persist login with `localStorage` fallback
 
-- The navbar appears broken on some pages due to routing mismatches, incorrect use of libraries, missing mobile support, and unauthenticated user confusion.
+### use-mobile.tsx
+- ✅ Simple media detection
+- ❌ Not SSR-safe, no initial screen fallback
+- 🔧 Guard access with `typeof window !== 'undefined'`; default to `false` or `sm` breakpoint width in SSR mode
 
-### Root Causes:
+### use-outfit.ts
+- ✅ Three hooks for fetch/generate/save
+- ❌ No toasts or retry handling
+- 🔧 Add success/error toasts; retry on network failure with React Query mutation options
 
-1. **Incorrect Theming System**: `next-themes` is built for Next.js SSR environments and doesn’t behave reliably in Vite/React Router. It can cause layout flashes, broken theme toggles, and hydration mismatches.
-2. **Broken Routing**: `<a href="/">` causes a full page reload in a SPA. This leads to unexpected resets, especially for dark mode or onboarding progress.
-3. **Lack of Auth Awareness**: All links (Dashboard, Profile, etc.) are shown regardless of login state. Logged-out users can click and be redirected or error out.
-4. **Missing Mobile Nav**: The navigation is hidden on small screens (`hidden md:flex`), with no alternative like a hamburger or drawer.
-5. **No Loading States or Fallbacks**: Theming state and navigation assume client readiness, causing flickers or broken rendering on load.
+### use-toast.ts
+- ✅ Full reducer, timeout map, update logic
+- ❌ Default timeout is ~17 mins, no hook
+- 🔧 Decrease to 5–8 seconds for typical UI toast; add `useToast()` consumer hook for cleaner component integration
 
-### Recommendations:
-
-- ✅ Replace `next-themes` with a context + Tailwind `class` based solution that stores preference in localStorage.
-- ✅ Use `<Link>` from `react-router-dom` everywhere.
-- ✅ Conditionally render nav links based on user authentication status.
-- ✅ Implement mobile navigation using a `DropdownMenu` or `Drawer` from ShadCN.
-- ✅ Add accessible labels (`aria-label`) and keyboard navigation support.
-
----
-
-## 📁 Component-Level Review
-
-### `Navbar.tsx`
-
-- ❌ Uses `next-themes` in Vite environment (not compatible)
-- ❌ Shows logged-in routes to all users
-- ❌ Uses raw `<a href>`
-- ❌ No mobile nav fallback
-- ✅ Theme toggle and layout consistent
-
-### `Footer.tsx`
-
-- ❌ Buttons used for navigation instead of links
-- ❌ Static links with no routing logic
-- ✅ Clear semantic structure, responsive
-
-### `OutfitCard.tsx`
-
-- ❌ No routing handler on action button
-- ❌ No unique ID passed for context
-- ✅ Responsive and engaging hover behavior
-
-### `QuickAction.tsx`
-
-- ❌ Missing `aria-label`
-- ✅ Simple reusable card-like shortcut component
-
-### `StyleCard.tsx`
-
-- ✅ Elegant, clean wrapper with slot content
-- ➕ Future-proof by allowing header/footer/action slots
+### use-wardrobe.ts
+- ✅ Full CRUD with Supabase, great caching
+- ❌ No feedback, no optimistic updates
+- 🔧 Add optimistic UI using `onMutate` + `onError` rollbacks with TanStack Mutation API; paginate list via `limit` and `offset`
 
 ---
 
-## 📁 Pages: UX + Functional Gaps
+## 📦 Lib & Services
 
-### `Landing.tsx`
+### lib/supabase.ts
+- ✅ Clean singleton setup
+- ❌ No missing env check, no admin client
+- 🔧 Add `validateEnv()` function to throw error if required `SUPABASE_URL`, `SUPABASE_ANON_KEY` is missing; optionally include admin client for server-only operations
 
-- ❌ Hero image lacks responsive optimization
-- ❌ No icons on feature items
-- ✅ Good copywriting and button placement
+### lib/utils.ts
+- ✅ `cn()` combines Tailwind classes safely
+- ❌ No issues
 
-### `Login/Register.tsx`
+### react-query/QueryProvider.tsx
+- ✅ Global client with defaults
+- ❌ No DevTools
+- 🔧 Import `ReactQueryDevtools` and add conditionally in `development` environment
 
-- ❌ No authentication logic implemented
-- ❌ Missing validation, loading state, error display
-- ✅ Clean forms, proper layout structure
-
-### `Onboarding.tsx`
-
-- ❌ Steps are hardcoded inline
-- ❌ No per-step validation
-- ✅ Context-based progress tracking is clean
-
-### `Outfit.tsx`
-
-- ❌ Search and filter not implemented
-- ❌ Items hardcoded
-- ✅ Consistent UI grid with cards
-
-### `CreateOutfit.tsx`
-
-- ❌ No actual AI or API logic
-- ❌ No loading or typing feedback
-- ✅ Conversational interface is engaging
-
-### `Wardrobe.tsx`
-
-- ❌ Static outfit content
-- ❌ Filter/Search not wired
-- ✅ Button navigation + layout consistent
-
-### `StyleQuiz.tsx`
-
-- ❌ Doesn’t record answers
-- ❌ No review/submit confirmation
-- ✅ Button-based progression is intuitive
-
-### `Tour.tsx`
-
-- ❌ No anchoring to live DOM elements
-- ❌ No back/previous step logic
-- ✅ Step-by-step modal logic is clear
-
-### `Dashboard.tsx`
-
-- ❌ Hardcoded metrics and logs
-- ❌ No API integration
-- ✅ Modular stats and recent activity card layout
-
-### `Help.tsx`
-
-- ❌ No search or categorization for FAQs
-- ✅ Accordion layout works great for compact answers
-
-### `Terms/Privacy.tsx`
-
-- ❌ Missing TOC, anchor links, last-updated text
-- ❌ No contact info listed
-- ✅ Typography is legible and compliant
-
-### `AddItem.tsx`
-
-- ❌ Data not saved/persisted
-- ❌ Fields not controlled
-- ✅ Image preview works and UI is tight
-
-### `ForgotPassword.tsx`
-
-- ❌ No backend integration for auth
-- ❌ No error state
-- ✅ Navigational logic and toast feedback included
+### validations/auth.ts
+- ✅ Strong schemas for auth + types
+- ❌ No trimming, no max limits
+- 🔧 Add `.trim()` to email/name fields; limit string length to 50–64 chars; use password strength pattern check with `.regex()` for security
 
 ---
 
-## 📁 Hooks & Context
+## 🛠 Priority Roadmap
 
-### `use-mobile.tsx`
+### Phase 1: Fixes
+- Replace next-themes → context-based theming system with localStorage persistence
+- Add Supabase integration for: Outfits (create/list/delete), Wardrobe (upload/view), Auth (login/logout/session)
+- Implement loading + error states using skeletons and toast fallback
+- Add search inputs and dropdown filters for Outfits and Wardrobe, validated by zod
 
-- ❌ Unsafe for SSR (no window check)
-- ✅ Helpful for layout rendering control
+### Phase 2: Features
+- Add favoriting toggle to Outfits and sync to user profile metadata
+- Enable sharing (copy link, open modal) and downloading outfit image grid
+- Persist onboarding answers in Supabase profiles
+- Add Stripe billing integration and show plan status in Dashboard
 
-### `OnboardingContext.tsx`
-
-- ❌ `totalSteps` is hardcoded
-- ❌ Generic `any` used in updater
-- ✅ Stores all data + progress in shared state
-
----
-
-## 📁 Lib Utilities
-
-### `utils.ts`
-
-- ✅ Uses `clsx` + `tailwind-merge` correctly
-- ➕ Can be expanded with common helpers (`slugify`, `truncate`, etc.)
+### Phase 3: Testing & QA
+- Write unit tests for FormFields, Cards, Navbar using Vitest
+- Add integration tests for onboarding flow and CreateOutfit chat stream
+- Use Mock Service Worker (MSW) to mock Supabase and OpenAI Vision responses
 
 ---
 
-## 🧭 Priority Implementation Roadmap
+## 🔐 Authentication Layer
+- ✅ Real-time Supabase auth events handled in use-auth.ts
+- 🔧 Needs full session persistence, error toast, and context fallback on reload
 
-### 🔧 Immediate Fixes
+## 🧠 State Management
+- ✅ Context + hooks for onboarding, auth, wardrobe
+- ⚙️ Consider Zustand for multi-page state, undo/redo, or persisting onboarding results
 
-- Replace `next-themes` → Context-based theme toggle
-- Add mobile navigation dropdown/drawer
-- Use `Link` instead of `<a>` everywhere
-- Add conditional nav rendering for auth
+## 🤖 AI Integration
+- ✅ OpenAI Vision mock pipeline
+- 🔧 Add input validation, loading overlay, retry if failure, and timestamp when generated
 
-### 🏗 Backend & Logic
+## 🔗 Supabase
+- ✅ Integrated in services and hooks
+- 🔧 Apply row-level security (RLS) policies by user ID; use separate image bucket for wardrobe uploads; sanitize all incoming data
 
-- Hook up login, registration, password reset
-- Implement actual outfit creation logic (API/AI)
-- Fetch dynamic outfit/wardrobe/dashboard data
+## 🧰 Testing Strategy
+- ✅ Hooks and services are testable
+- 🔧 Add `tests/__mocks__` for supabase, openai, react-query; validate form edge cases; include CI runner for Vitest
 
-### ✨ UI & UX Polish
-
-- Add animations between onboarding/quiz steps
-- Improve accessibility (aria roles, labels, keyboard navigation)
-- Enable image type validation on uploads
-
-### 📦 Dev Tooling & QA
-
-- Add unit tests using Vitest or Jest
-- Set up Prettier + ESLint run scripts
-- Add `.env.example` and README setup instructions
-
+---

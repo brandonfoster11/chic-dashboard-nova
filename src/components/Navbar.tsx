@@ -1,191 +1,129 @@
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Moon, Sun, Grid, User, Settings, Wand2, Menu, LogOut } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../hooks/use-auth';
+import { Button } from '../components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
+import { Menu, Moon, Sun } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-export const Navbar = () => {
+export function Navbar() {
+  const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
-  const { isAuthenticated, user, logout } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleMobileMenuToggle = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
   };
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="text-xl font-bold">
-            StyleAI
-          </Link>
-          <div className="hidden md:flex gap-4">
-            {isAuthenticated && (
-              <>
-                <Link to="/dashboard">
-                  <Button variant="ghost">
-                    <Grid className="h-4 w-4 mr-2" />
-                    Dashboard
-                  </Button>
-                </Link>
-                <Link to="/wardrobe">
-                  <Button variant="ghost">Wardrobe</Button>
-                </Link>
-                <Link to="/outfit">
-                  <Button variant="ghost">Outfits</Button>
-                </Link>
-                <Link to="/create-outfit">
-                  <Button variant="ghost" className="text-primary">
-                    <Wand2 className="h-4 w-4 mr-2" />
-                    Generate Outfit
-                  </Button>
-                </Link>
-              </>
-            )}
-            <Link to="/pricing">
-              <Button variant="ghost">Pricing</Button>
+    <nav className="border-b bg-background">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link to="/" className="text-2xl font-bold">
+              StyleAI
             </Link>
-            <Link to="/blog">
-              <Button variant="ghost">Blog</Button>
-            </Link>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleMobileMenuToggle}
-            className="md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </div>
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
-          {isAuthenticated ? (
-            <>
-              <Link to="/profile">
-                <Button variant="ghost">
-                  <User className="h-4 w-4 mr-2" />
-                  {user?.name || 'Profile'}
-                </Button>
+            <div className="hidden md:flex items-center space-x-4">
+              <Link to="/wardrobe" className="text-sm font-medium hover:text-primary">
+                Wardrobe
               </Link>
-              <Link to="/settings">
-                <Button variant="ghost">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </Button>
+              <Link to="/outfits" className="text-sm font-medium hover:text-primary">
+                Outfits
               </Link>
-              <Button variant="ghost" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button variant="ghost">Login</Button>
-              </Link>
-              <Link to="/register">
-                <Button>Sign Up</Button>
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-      {/* Mobile Menu */}
-      <div
-        className={`fixed inset-x-0 bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300 md:hidden ${
-          isMobileMenuOpen ? 'translate-y-0' : 'translate-y-full'
-        }`}
-      >
-        <div className="container p-4">
-          <div className="space-y-4">
-            {isAuthenticated ? (
-              <>
-                <Link to="/dashboard">
-                  <Button variant="ghost" className="w-full justify-start">
-                    <Grid className="h-4 w-4 mr-2" />
+              {user && (
+                <>
+                  <Link to="/dashboard" className="text-sm font-medium hover:text-primary">
                     Dashboard
-                  </Button>
-                </Link>
-                <Link to="/wardrobe">
-                  <Button variant="ghost" className="w-full justify-start">
-                    Wardrobe
-                  </Button>
-                </Link>
-                <Link to="/outfit">
-                  <Button variant="ghost" className="w-full justify-start">
-                    Outfits
-                  </Button>
-                </Link>
-                <Link to="/create-outfit">
-                  <Button variant="ghost" className="w-full justify-start text-primary">
-                    <Wand2 className="h-4 w-4 mr-2" />
-                    Generate Outfit
-                  </Button>
-                </Link>
-                <Link to="/profile">
-                  <Button variant="ghost" className="w-full justify-start">
-                    <User className="h-4 w-4 mr-2" />
+                  </Link>
+                  <Link to="/profile" className="text-sm font-medium hover:text-primary">
                     Profile
-                  </Button>
-                </Link>
-                <Link to="/settings">
-                  <Button variant="ghost" className="w-full justify-start">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </Button>
-                </Link>
-                <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+
+            <div className="hidden md:flex items-center space-x-4">
+              {!user ? (
+                <>
+                  <Link to="/login">
+                    <Button variant="ghost">Login</Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button>Register</Button>
+                  </Link>
+                </>
+              ) : (
+                <Button onClick={handleLogout} variant="ghost">
                   Logout
                 </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/pricing">
-                  <Button variant="ghost" className="w-full justify-start">
-                    Pricing
+              )}
+            </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Open menu">
+                    <Menu className="h-5 w-5" />
                   </Button>
-                </Link>
-                <Link to="/blog">
-                  <Button variant="ghost" className="w-full justify-start">
-                    Blog
-                  </Button>
-                </Link>
-                <Link to="/login">
-                  <Button variant="ghost" className="w-full justify-start">
-                    Login
-                  </Button>
-                </Link>
-                <Link to="/register">
-                  <Button variant="ghost" className="w-full justify-start">
-                    Sign Up
-                  </Button>
-                </Link>
-              </>
-            )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/wardrobe">Wardrobe</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/outfits">Outfits</Link>
+                  </DropdownMenuItem>
+                  {user && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/dashboard">Dashboard</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/profile">Profile</Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={toggleTheme}>
+                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                  </DropdownMenuItem>
+                  {!user ? (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/login">Login</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/register">Register</Link>
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem onClick={handleLogout}>
+                      Logout
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
     </nav>
   );
-};
+}
