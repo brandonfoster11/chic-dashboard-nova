@@ -1,21 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, ResetPasswordFormValues } from "@/lib/validations/auth";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const { resetPassword, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
+  const { toast } = useToast();
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -24,17 +26,47 @@ const ForgotPassword = () => {
     },
   });
 
+  // Auto-focus email field on component mount
+  useEffect(() => {
+    const emailInput = document.querySelector('input[name="email"]') as HTMLInputElement;
+    if (emailInput) {
+      emailInput.focus();
+    }
+  }, []);
+
+  // Handle countdown and redirect after success
+  useEffect(() => {
+    if (isSuccess && redirectCountdown > 0) {
+      const timer = setTimeout(() => {
+        setRedirectCountdown(redirectCountdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (isSuccess && redirectCountdown === 0) {
+      navigate("/login");
+    }
+  }, [isSuccess, redirectCountdown, navigate]);
+
   const onSubmit = async (values: ResetPasswordFormValues) => {
     try {
       setAuthError(null);
       await resetPassword(values.email);
       setIsSuccess(true);
-      toast.success("Reset link sent to your email");
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+      
+      toast({
+        title: "Reset link sent",
+        description: "Please check your email for the password reset link",
+        variant: "default",
+      });
+      
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Failed to send reset link");
+      const errorMessage = error instanceof Error ? error.message : "Failed to send reset link";
+      setAuthError(errorMessage);
+      
+      toast({
+        title: "Failed to send reset link",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -49,36 +81,40 @@ const ForgotPassword = () => {
         </div>
 
         {authError && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" role="alert">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{authError}</AlertDescription>
           </Alert>
         )}
 
         {isSuccess && (
-          <Alert>
+          <Alert variant="default" role="status" aria-live="polite">
+            <CheckCircle className="h-4 w-4" />
             <AlertDescription>
-              Reset link sent! Please check your email.
+              Reset link sent! Please check your email. Redirecting to login in {redirectCountdown} seconds...
             </AlertDescription>
           </Alert>
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" aria-label="Password reset form">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email address</FormLabel>
+                  <FormLabel htmlFor="email">Email address</FormLabel>
                   <FormControl>
                     <Input
+                      id="email"
                       placeholder="Enter your email"
                       type="email"
+                      autoComplete="email"
+                      aria-required="true"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage aria-live="polite" />
                 </FormItem>
               )}
             />
@@ -86,6 +122,7 @@ const ForgotPassword = () => {
               type="submit" 
               className="w-full"
               disabled={isLoading || isSuccess}
+              aria-busy={isLoading}
             >
               {isLoading ? "Sending..." : "Send Reset Link"}
             </Button>
