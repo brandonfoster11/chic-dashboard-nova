@@ -1,5 +1,7 @@
 import { supabase } from '@/utils/supabase';
 import { WardrobeFilters, WardrobeItem, WardrobeService as IWardrobeService, WardrobeStats } from './types';
+import { validateData } from '@/lib/middleware/validation';
+import { createWardrobeItemSchema, updateWardrobeItemSchema } from '@/lib/validations/wardrobe';
 
 export interface CreateWardrobeItemDTO {
   name: string;
@@ -82,46 +84,106 @@ export class WardrobeService implements IWardrobeService {
     }
   }
 
-  async addWardrobeItem(item: CreateWardrobeItemDTO): Promise<WardrobeItem> {
+  async addWardrobeItem(item: CreateWardrobeItemDTO): Promise<WardrobeItem | null> {
     try {
-      const newItem = {
-        ...item,
-        created_at: new Date().toISOString(),
-        wearCount: 0,
-        favorite: item.favorite || false,
-        tags: item.tags || [],
-      };
+      // Validate and sanitize input data
+      const validationResult = validateData(createWardrobeItemSchema, {
+        name: item.name,
+        category: item.type, // Map type to category for validation
+        color: item.color,
+        image_url: item.imageUrl,
+        description: item.description,
+        brand: item.brand,
+        tags: item.tags,
+        favorite: item.favorite || false
+      });
 
+      // If validation fails, return null
+      if (!validationResult.success) {
+        console.error('Validation failed:', validationResult.errors);
+        return null;
+      }
+
+      // Use the validated and sanitized data
+      const validatedData = validationResult.data;
+      
       const { data, error } = await supabase
         .from('wardrobe_items')
-        .insert([newItem])
+        .insert({
+          name: validatedData.name,
+          type: validatedData.category, // Map category back to type
+          color: validatedData.color,
+          image_url: validatedData.image_url,
+          description: validatedData.description,
+          brand: validatedData.brand,
+          tags: validatedData.tags || [],
+          favorite: validatedData.favorite || false,
+          dateAdded: new Date().toISOString(),
+          wearCount: 0
+        })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding wardrobe item:', error);
+        return null;
+      }
 
       return data as WardrobeItem;
     } catch (error) {
       console.error('Error adding wardrobe item:', error);
-      throw new Error('Failed to add wardrobe item');
+      return null;
     }
   }
 
-  async updateWardrobeItem(id: string, updates: Partial<WardrobeItem>): Promise<WardrobeItem> {
+  async updateWardrobeItem(id: string, updates: Partial<WardrobeItem>): Promise<WardrobeItem | null> {
     try {
+      // Validate and sanitize input data
+      const validationResult = validateData(updateWardrobeItemSchema, {
+        id,
+        ...updates,
+        // Map type to category for validation if it exists
+        ...(updates.type && { category: updates.type })
+      });
+
+      // If validation fails, return null
+      if (!validationResult.success) {
+        console.error('Validation failed:', validationResult.errors);
+        return null;
+      }
+
+      // Use the validated and sanitized data
+      const validatedData = validationResult.data;
+      
+      // Prepare update data, mapping category back to type if needed
+      const updateData = {
+        ...validatedData,
+        ...(validatedData.category && { type: validatedData.category }),
+        // Use the correct property name based on the WardrobeItem interface
+        lastModified: new Date().toISOString()
+      };
+      
+      // Remove category from update data to avoid DB schema conflicts
+      if ('category' in updateData) {
+        delete updateData.category;
+      }
+
       const { data, error } = await supabase
         .from('wardrobe_items')
-        .update(updates)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating wardrobe item:', error);
+        return null;
+      }
 
       return data as WardrobeItem;
     } catch (error) {
       console.error('Error updating wardrobe item:', error);
-      throw new Error(`Failed to update wardrobe item with id ${id}`);
+      return null;
     }
   }
 
@@ -173,7 +235,7 @@ export class WardrobeService implements IWardrobeService {
 
       // Get recently added items (top 5)
       const recentlyAdded = wardrobeItems
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
         .slice(0, 5);
 
       // Get favorite items

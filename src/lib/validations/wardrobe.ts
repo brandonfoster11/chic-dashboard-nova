@@ -1,4 +1,5 @@
 import * as z from 'zod';
+import { sanitizeText, sanitizeUrl, sanitizeArray } from '../utils/sanitization';
 
 // Define allowed categories and subcategories
 const clothingCategories = [
@@ -19,20 +20,21 @@ const clothingSubcategories = {
   activewear: ['workout top', 'workout bottom', 'sports bra', 'swimwear']
 };
 
-// Sanitize text input
-const sanitizeText = (input: string) => {
-  // Remove any HTML tags
-  const noHtml = input.replace(/<[^>]*>/g, '');
-  // Trim whitespace
-  return noHtml.trim();
-};
+// Maximum input lengths for security
+const MAX_NAME_LENGTH = 50;
+const MAX_COLOR_LENGTH = 30;
+const MAX_PATTERN_LENGTH = 30;
+const MAX_BRAND_LENGTH = 50;
+const MAX_TAG_LENGTH = 20;
+const MAX_DESCRIPTION_LENGTH = 500;
+const MIN_NAME_LENGTH = 2;
+const MIN_COLOR_LENGTH = 2;
 
 // Base schema for wardrobe items
 export const wardrobeItemSchema = z.object({
   name: z.string()
-    .trim()
-    .min(2, { message: 'Name must be at least 2 characters' })
-    .max(50, { message: 'Name must be less than 50 characters' })
+    .min(MIN_NAME_LENGTH, { message: `Name must be at least ${MIN_NAME_LENGTH} characters` })
+    .max(MAX_NAME_LENGTH, { message: `Name must be less than ${MAX_NAME_LENGTH} characters` })
     .transform(sanitizeText),
   
   category: z.enum(clothingCategories, {
@@ -41,30 +43,21 @@ export const wardrobeItemSchema = z.object({
   
   subcategory: z.string()
     .trim()
-    .refine(
-      (val) => {
-        const category = z.getContext().data.category as keyof typeof clothingSubcategories;
-        return clothingSubcategories[category]?.includes(val) || val === '';
-      },
-      { message: 'Please select a valid subcategory for the selected category' }
-    )
-    .optional(),
+    .optional()
+    .transform(sanitizeText),
   
   color: z.string()
-    .trim()
-    .min(2, { message: 'Color must be at least 2 characters' })
-    .max(30, { message: 'Color must be less than 30 characters' })
+    .min(MIN_COLOR_LENGTH, { message: `Color must be at least ${MIN_COLOR_LENGTH} characters` })
+    .max(MAX_COLOR_LENGTH, { message: `Color must be less than ${MAX_COLOR_LENGTH} characters` })
     .transform(sanitizeText),
   
   pattern: z.string()
-    .trim()
-    .max(30, { message: 'Pattern must be less than 30 characters' })
+    .max(MAX_PATTERN_LENGTH, { message: `Pattern must be less than ${MAX_PATTERN_LENGTH} characters` })
     .transform(sanitizeText)
     .optional(),
   
   brand: z.string()
-    .trim()
-    .max(50, { message: 'Brand must be less than 50 characters' })
+    .max(MAX_BRAND_LENGTH, { message: `Brand must be less than ${MAX_BRAND_LENGTH} characters` })
     .transform(sanitizeText)
     .optional(),
   
@@ -82,21 +75,33 @@ export const wardrobeItemSchema = z.object({
   
   image_url: z.string()
     .url({ message: 'Please enter a valid URL' })
+    .transform(sanitizeUrl)
     .optional(),
   
   purchase_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Date must be in YYYY-MM-DD format' })
     .optional(),
   
-  tags: z.array(z.string().trim().max(20))
-    .transform(tags => tags.map(sanitizeText))
+  tags: z.array(z.string().trim().max(MAX_TAG_LENGTH))
+    .transform(sanitizeArray)
     .default([]),
   
   description: z.string()
-    .trim()
-    .max(500, { message: 'Description must be less than 500 characters' })
+    .max(MAX_DESCRIPTION_LENGTH, { message: `Description must be less than ${MAX_DESCRIPTION_LENGTH} characters` })
     .transform(sanitizeText)
     .optional(),
+  
+  last_worn: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Date must be in YYYY-MM-DD format' })
+    .optional(),
+  
+  favorite: z.boolean()
+    .default(false),
+  
+  wear_count: z.number()
+    .int()
+    .min(0)
+    .default(0),
 });
 
 // Schema for creating a new wardrobe item
