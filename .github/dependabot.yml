@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "07:00"
+    timezone: "America/Denver"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    reviewers:
+      - "brandonfoster11"
+    labels:
+      - "dependencies"
+      - "security"
+    versioning-strategy: "auto"
+    ignore:
+      - dependency-name: "esbuild"
+        versions: ["<=0.24.2"]
+      - dependency-name: "vite"
+        versions: ["<6.1.5"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+    target-branch: "main"
+    reviewers:
+      - "brandonfoster11"
+    labels:
+      - "dependencies"
+      - "security"
+    versioning-strategy: "auto"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "main"
+    reviewers:
+      - "brandonfoster11"
+    labels:
+      - "dependencies"
+      - "security"
+    versioning-strategy: "auto"

@@ -19,58 +19,91 @@ ON CONFLICT (id) DO UPDATE SET
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- Users can view their own uploaded files
-CREATE POLICY "Users can view their own wardrobe images"
-ON storage.objects FOR SELECT
-USING (
-  bucket_id = 'wardrobe-images' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
+DO $$ BEGIN
+  CREATE POLICY "Users can view their own wardrobe images"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'wardrobe-images' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can upload their own files
-CREATE POLICY "Users can upload their own wardrobe images"
-ON storage.objects FOR INSERT
-WITH CHECK (
-  bucket_id = 'wardrobe-images' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
+DO $$ BEGIN
+  CREATE POLICY "Users can upload their own wardrobe images"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'wardrobe-images' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can update their own files
-CREATE POLICY "Users can update their own wardrobe images"
-ON storage.objects FOR UPDATE
-USING (
-  bucket_id = 'wardrobe-images' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
+DO $$ BEGIN
+  CREATE POLICY "Users can update their own wardrobe images"
+  ON storage.objects FOR UPDATE
+  USING (
+    bucket_id = 'wardrobe-images' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can delete their own files
-CREATE POLICY "Users can delete their own wardrobe images"
-ON storage.objects FOR DELETE
-USING (
-  bucket_id = 'wardrobe-images' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
+DO $$ BEGIN
+  CREATE POLICY "Users can delete their own wardrobe images"
+  ON storage.objects FOR DELETE
+  USING (
+    bucket_id = 'wardrobe-images' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can view all files
-CREATE POLICY "Admins can view all wardrobe images"
-ON storage.objects FOR SELECT
-USING (
-  bucket_id = 'wardrobe-images' AND
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "Admins can view all wardrobe images"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'wardrobe-images' AND
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Create a function to generate a secure upload path
-CREATE OR REPLACE FUNCTION get_secure_upload_path(user_id UUID, file_name TEXT)
+CREATE OR REPLACE FUNCTION generate_upload_path(user_id UUID, filename TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
+DECLARE
+  file_ext TEXT;
+  unique_filename TEXT;
 BEGIN
-  -- Format: user_id/timestamp_random_filename.ext
-  RETURN user_id || '/' || 
-         to_char(now(), 'YYYYMMDD_HH24MISS') || '_' || 
-         substr(md5(random()::text), 1, 8) || '_' ||
-         file_name;
+  -- Extract file extension
+  file_ext := substring(filename from '\.([^\.]+)$');
+  
+  -- Generate a unique filename with UUID
+  unique_filename := uuid_generate_v4()::text;
+  
+  -- If file extension exists, append it
+  IF file_ext IS NOT NULL THEN
+    unique_filename := unique_filename || '.' || file_ext;
+  END IF;
+  
+  -- Return path in format: user_id/YYYY-MM-DD/unique_filename
+  RETURN user_id::text || '/' || to_char(now(), 'YYYY-MM-DD') || '/' || unique_filename;
 END;
 $$;

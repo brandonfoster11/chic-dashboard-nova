@@ -28,13 +28,16 @@ CREATE TABLE IF NOT EXISTS profiles (
   username TEXT UNIQUE,
   full_name TEXT,
   avatar_url TEXT,
-  role_id INTEGER REFERENCES roles(id) DEFAULT 1, -- Default to 'user' role
   style_preferences JSONB DEFAULT '{}',
   body_measurements JSONB DEFAULT '{}',
   onboarding_completed BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add role_id column after profiles table is created
+ALTER TABLE profiles 
+ADD COLUMN IF NOT EXISTS role_id INTEGER REFERENCES roles(id) DEFAULT 1;
 
 -- WARDROBE ITEMS TABLE
 -- Stores individual clothing items that belong to a user
@@ -49,12 +52,11 @@ CREATE TABLE IF NOT EXISTS wardrobe_items (
   brand TEXT,
   seasons TEXT[] DEFAULT '{}',
   formality INTEGER CHECK (formality BETWEEN 1 AND 5),
-  image_url TEXT,
+  size TEXT,
+  condition TEXT,
+  price DECIMAL(10,2),
   purchase_date DATE,
-  last_worn TIMESTAMPTZ,
-  favorite BOOLEAN DEFAULT FALSE,
-  tags TEXT[] DEFAULT '{}',
-  metadata JSONB DEFAULT '{}',
+  notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -63,7 +65,7 @@ CREATE TABLE IF NOT EXISTS wardrobe_items (
 CREATE INDEX IF NOT EXISTS idx_wardrobe_items_user_id ON wardrobe_items(user_id);
 
 -- OUTFITS TABLE
--- Stores outfit combinations created by users
+-- Stores user-created outfits
 CREATE TABLE IF NOT EXISTS outfits (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(id) NOT NULL,
@@ -71,11 +73,6 @@ CREATE TABLE IF NOT EXISTS outfits (
   description TEXT,
   occasion TEXT,
   season TEXT,
-  formality INTEGER CHECK (formality BETWEEN 1 AND 5),
-  rating INTEGER CHECK (rating BETWEEN 1 AND 5),
-  times_worn INTEGER DEFAULT 0,
-  is_favorite BOOLEAN DEFAULT FALSE,
-  tags TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -84,32 +81,24 @@ CREATE TABLE IF NOT EXISTS outfits (
 CREATE INDEX IF NOT EXISTS idx_outfits_user_id ON outfits(user_id);
 
 -- OUTFIT ITEMS TABLE
--- Junction table connecting outfits to wardrobe items
+-- Links wardrobe items to outfits
 CREATE TABLE IF NOT EXISTS outfit_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  outfit_id UUID REFERENCES outfits(id) ON DELETE CASCADE NOT NULL,
-  item_id UUID REFERENCES wardrobe_items(id) ON DELETE CASCADE NOT NULL,
-  position INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(outfit_id, item_id)
+  outfit_id UUID REFERENCES outfits(id) NOT NULL,
+  wardrobe_item_id UUID REFERENCES wardrobe_items(id) NOT NULL,
+  position INTEGER,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create indexes for faster queries
+-- Create index on outfit_id for faster queries
 CREATE INDEX IF NOT EXISTS idx_outfit_items_outfit_id ON outfit_items(outfit_id);
-CREATE INDEX IF NOT EXISTS idx_outfit_items_item_id ON outfit_items(item_id);
 
 -- STYLE PREFERENCES TABLE
--- Stores user's style quiz results and preferences
+-- Stores user style preferences
 CREATE TABLE IF NOT EXISTS style_preferences (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES profiles(id) UNIQUE NOT NULL,
-  color_palette TEXT[] DEFAULT '{}',
-  preferred_styles TEXT[] DEFAULT '{}',
-  avoided_styles TEXT[] DEFAULT '{}',
-  preferred_brands TEXT[] DEFAULT '{}',
-  seasonal_preferences JSONB DEFAULT '{}',
-  occasion_preferences JSONB DEFAULT '{}',
-  quiz_results JSONB DEFAULT '{}',
+  user_id UUID REFERENCES profiles(id) NOT NULL,
+  preferences JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -118,41 +107,34 @@ CREATE TABLE IF NOT EXISTS style_preferences (
 CREATE INDEX IF NOT EXISTS idx_style_preferences_user_id ON style_preferences(user_id);
 
 -- OUTFIT SHARES TABLE
--- Tracks outfits shared between users
+-- Manages outfit sharing between users
 CREATE TABLE IF NOT EXISTS outfit_shares (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  outfit_id UUID REFERENCES outfits(id) ON DELETE CASCADE NOT NULL,
+  outfit_id UUID REFERENCES outfits(id) NOT NULL,
   shared_by UUID REFERENCES profiles(id) NOT NULL,
   shared_with UUID REFERENCES profiles(id) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(outfit_id, shared_with)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Create indexes for faster queries
-CREATE INDEX IF NOT EXISTS idx_outfit_shares_outfit_id ON outfit_shares(outfit_id);
 CREATE INDEX IF NOT EXISTS idx_outfit_shares_shared_by ON outfit_shares(shared_by);
 CREATE INDEX IF NOT EXISTS idx_outfit_shares_shared_with ON outfit_shares(shared_with);
 
 -- OUTFIT RECOMMENDATIONS TABLE
--- Stores AI-generated outfit recommendations
+-- Stores outfit recommendations
 CREATE TABLE IF NOT EXISTS outfit_recommendations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(id) NOT NULL,
   outfit_id UUID REFERENCES outfits(id),
   recommendation_type TEXT NOT NULL,
-  occasion TEXT,
-  season TEXT,
   confidence_score FLOAT,
-  is_viewed BOOLEAN DEFAULT FALSE,
-  is_saved BOOLEAN DEFAULT FALSE,
-  feedback TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Create index on user_id for faster queries
 CREATE INDEX IF NOT EXISTS idx_outfit_recommendations_user_id ON outfit_recommendations(user_id);
 
--- ROW LEVEL SECURITY POLICIES
 -- Enable RLS on all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wardrobe_items ENABLE ROW LEVEL SECURITY;
@@ -162,472 +144,491 @@ ALTER TABLE style_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outfit_shares ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outfit_recommendations ENABLE ROW LEVEL SECURITY;
 
--- PROFILES POLICIES
--- Users can view their own profile
-CREATE POLICY "Users can view their own profile"
-ON profiles FOR SELECT
-USING (id = auth.uid());
-
--- Admins can view all profiles
-CREATE POLICY "Admins can view all profiles"
-ON profiles FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- Users can insert their own profile
-CREATE POLICY "Users can insert their own profile"
-ON profiles FOR INSERT
-WITH CHECK (id = auth.uid());
-
--- Users can update their own profile
-CREATE POLICY "Users can update their own profile"
-ON profiles FOR UPDATE
-USING (id = auth.uid());
-
--- Admins can update all profiles
-CREATE POLICY "Admins can update all profiles"
-ON profiles FOR UPDATE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- WARDROBE ITEMS POLICIES
--- Users can view their own wardrobe items
-CREATE POLICY "Users can view their own wardrobe items"
-ON wardrobe_items FOR SELECT
-USING (user_id = auth.uid());
-
--- Users can insert their own wardrobe items
-CREATE POLICY "Users can insert their own wardrobe items"
-ON wardrobe_items FOR INSERT
-WITH CHECK (user_id = auth.uid());
-
--- Users can update their own wardrobe items
-CREATE POLICY "Users can update their own wardrobe items"
-ON wardrobe_items FOR UPDATE
-USING (user_id = auth.uid());
-
--- Users can delete their own wardrobe items
-CREATE POLICY "Users can delete their own wardrobe items"
-ON wardrobe_items FOR DELETE
-USING (user_id = auth.uid());
-
--- Admins can view all wardrobe items
-CREATE POLICY "Admins can view all wardrobe items"
-ON wardrobe_items FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- Admins can insert all wardrobe items
-CREATE POLICY "Admins can insert all wardrobe items"
-ON wardrobe_items FOR INSERT
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- Admins can update all wardrobe items
-CREATE POLICY "Admins can update all wardrobe items"
-ON wardrobe_items FOR UPDATE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- Admins can delete all wardrobe items
-CREATE POLICY "Admins can delete all wardrobe items"
-ON wardrobe_items FOR DELETE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
 -- OUTFITS POLICIES
 -- Users can view their own outfits or shared with them
-CREATE POLICY "Users can view their own outfits or shared with them"
-ON outfits FOR SELECT
-USING (
-  user_id = auth.uid() OR
-  id IN (
-    SELECT outfit_id FROM outfit_shares
-    WHERE shared_with = auth.uid()
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfits_view_own_or_shared"
+  ON outfits FOR SELECT
+  USING (
+    user_id = auth.uid() OR
+    EXISTS (
+      SELECT 1 
+      FROM outfit_shares 
+      WHERE outfit_shares.outfit_id = outfits.id 
+      AND outfit_shares.shared_with = auth.uid()
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can insert their own outfits
-CREATE POLICY "Users can insert their own outfits"
-ON outfits FOR INSERT
-WITH CHECK (user_id = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "outfits_insert_own"
+  ON outfits FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can update their own outfits
-CREATE POLICY "Users can update their own outfits"
-ON outfits FOR UPDATE
-USING (user_id = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "outfits_update_own"
+  ON outfits FOR UPDATE
+  USING (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can delete their own outfits
-CREATE POLICY "Users can delete their own outfits"
-ON outfits FOR DELETE
-USING (user_id = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "outfits_delete_own"
+  ON outfits FOR DELETE
+  USING (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can view all outfits
-CREATE POLICY "Admins can view all outfits"
-ON outfits FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- Admins can insert all outfits
-CREATE POLICY "Admins can insert all outfits"
-ON outfits FOR INSERT
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfits_admin_view_all"
+  ON outfits FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can update all outfits
-CREATE POLICY "Admins can update all outfits"
-ON outfits FOR UPDATE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfits_admin_update_all"
+  ON outfits FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can delete all outfits
-CREATE POLICY "Admins can delete all outfits"
-ON outfits FOR DELETE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfits_admin_delete_all"
+  ON outfits FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- OUTFIT ITEMS POLICIES
 -- Users can view items in their own outfits or shared with them
-CREATE POLICY "Users can view items in their own outfits or shared with them"
-ON outfit_items FOR SELECT
-USING (
-  outfit_id IN (
-    SELECT id FROM outfits
-    WHERE user_id = auth.uid() OR
-    id IN (
-      SELECT outfit_id FROM outfit_shares
-      WHERE shared_with = auth.uid()
+DO $$ BEGIN
+  CREATE POLICY "outfit_items_view_own_or_shared"
+  ON outfit_items FOR SELECT
+  USING (
+    outfit_id IN (
+      SELECT id FROM outfits 
+      WHERE user_id = auth.uid() OR
+      id IN (
+        SELECT outfit_id FROM outfit_shares 
+        WHERE shared_with = auth.uid()
+      )
     )
-  )
-);
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can insert items to their own outfits
-CREATE POLICY "Users can insert items to their own outfits"
-ON outfit_items FOR INSERT
-WITH CHECK (
-  outfit_id IN (
-    SELECT id FROM outfits
-    WHERE user_id = auth.uid()
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_items_insert_own"
+  ON outfit_items FOR INSERT
+  WITH CHECK (
+    outfit_id IN (
+      SELECT id FROM outfits 
+      WHERE user_id = auth.uid()
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can update items in their own outfits
-CREATE POLICY "Users can update items in their own outfits"
-ON outfit_items FOR UPDATE
-USING (
-  outfit_id IN (
-    SELECT id FROM outfits
-    WHERE user_id = auth.uid()
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_items_update_own"
+  ON outfit_items FOR UPDATE
+  USING (
+    outfit_id IN (
+      SELECT id FROM outfits 
+      WHERE user_id = auth.uid()
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can delete items from their own outfits
-CREATE POLICY "Users can delete items from their own outfits"
-ON outfit_items FOR DELETE
-USING (
-  outfit_id IN (
-    SELECT id FROM outfits
-    WHERE user_id = auth.uid()
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_items_delete_own"
+  ON outfit_items FOR DELETE
+  USING (
+    outfit_id IN (
+      SELECT id FROM outfits 
+      WHERE user_id = auth.uid()
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can view all outfit items
-CREATE POLICY "Admins can view all outfit items"
-ON outfit_items FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- Admins can insert all outfit items
-CREATE POLICY "Admins can insert all outfit items"
-ON outfit_items FOR INSERT
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_items_admin_view_all"
+  ON outfit_items FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can update all outfit items
-CREATE POLICY "Admins can update all outfit items"
-ON outfit_items FOR UPDATE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_items_admin_update_all"
+  ON outfit_items FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can delete all outfit items
-CREATE POLICY "Admins can delete all outfit items"
-ON outfit_items FOR DELETE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_items_admin_delete_all"
+  ON outfit_items FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- STYLE PREFERENCES POLICIES
 -- Users can view their own style preferences
-CREATE POLICY "Users can view their own style preferences"
-ON style_preferences FOR SELECT
-USING (user_id = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "style_preferences_view_own"
+  ON style_preferences FOR SELECT
+  USING (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can insert their own style preferences
-CREATE POLICY "Users can insert their own style preferences"
-ON style_preferences FOR INSERT
-WITH CHECK (user_id = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "style_preferences_insert_own"
+  ON style_preferences FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can update their own style preferences
-CREATE POLICY "Users can update their own style preferences"
-ON style_preferences FOR UPDATE
-USING (user_id = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "style_preferences_update_own"
+  ON style_preferences FOR UPDATE
+  USING (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can view all style preferences
-CREATE POLICY "Admins can view all style preferences"
-ON style_preferences FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- Admins can insert all style preferences
-CREATE POLICY "Admins can insert all style preferences"
-ON style_preferences FOR INSERT
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "style_preferences_admin_view_all"
+  ON style_preferences FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can update all style preferences
-CREATE POLICY "Admins can update all style preferences"
-ON style_preferences FOR UPDATE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "style_preferences_admin_update_all"
+  ON style_preferences FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- OUTFIT SHARES POLICIES
 -- Users can view outfits shared by them or with them
-CREATE POLICY "Users can view outfits shared by them or with them"
-ON outfit_shares FOR SELECT
-USING (shared_by = auth.uid() OR shared_with = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "outfit_shares_view_own_or_shared"
+  ON outfit_shares FOR SELECT
+  USING (shared_by = auth.uid() OR shared_with = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can share their own outfits
-CREATE POLICY "Users can share their own outfits"
-ON outfit_shares FOR INSERT
-WITH CHECK (
-  outfit_id IN (
-    SELECT id FROM outfits
-    WHERE user_id = auth.uid()
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_shares_insert_own"
+  ON outfit_shares FOR INSERT
+  WITH CHECK (
+    outfit_id IN (
+      SELECT id FROM outfits 
+      WHERE user_id = auth.uid()
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can delete shares they created
-CREATE POLICY "Users can delete shares they created"
-ON outfit_shares FOR DELETE
-USING (shared_by = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "outfit_shares_delete_own"
+  ON outfit_shares FOR DELETE
+  USING (shared_by = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can view all outfit shares
-CREATE POLICY "Admins can view all outfit shares"
-ON outfit_shares FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- Admins can insert all outfit shares
-CREATE POLICY "Admins can insert all outfit shares"
-ON outfit_shares FOR INSERT
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_shares_admin_view_all"
+  ON outfit_shares FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can delete all outfit shares
-CREATE POLICY "Admins can delete all outfit shares"
-ON outfit_shares FOR DELETE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_shares_admin_delete_all"
+  ON outfit_shares FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- OUTFIT RECOMMENDATIONS POLICIES
 -- Users can view their own recommendations
-CREATE POLICY "Users can view their own recommendations"
-ON outfit_recommendations FOR SELECT
-USING (user_id = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "outfit_recommendations_view_own"
+  ON outfit_recommendations FOR SELECT
+  USING (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
--- Users can update their own recommendations (for feedback)
-CREATE POLICY "Users can update their own recommendations"
-ON outfit_recommendations FOR UPDATE
-USING (user_id = auth.uid());
+-- Users can update their own recommendations
+DO $$ BEGIN
+  CREATE POLICY "outfit_recommendations_update_own"
+  ON outfit_recommendations FOR UPDATE
+  USING (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can view all outfit recommendations
-CREATE POLICY "Admins can view all outfit recommendations"
-ON outfit_recommendations FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- Admins can insert all outfit recommendations
-CREATE POLICY "Admins can insert all outfit recommendations"
-ON outfit_recommendations FOR INSERT
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
+DO $$ BEGIN
+  CREATE POLICY "outfit_recommendations_admin_view_all"
+  ON outfit_recommendations FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Admins can update all outfit recommendations
-CREATE POLICY "Admins can update all outfit recommendations"
-ON outfit_recommendations FOR UPDATE
-USING (
-  EXISTS (
-    SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
-  )
-);
-
--- TRIGGERS
--- Create a trigger to automatically create a profile entry when a new user signs up
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, username, avatar_url)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    'https://ui-avatars.com/api/?name=' || encode(NEW.email::bytea, 'base64')
+DO $$ BEGIN
+  CREATE POLICY "outfit_recommendations_admin_update_all"
+  ON outfit_recommendations FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
   );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
--- Trigger the function every time a user is created
-CREATE OR REPLACE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+-- PROFILES POLICIES
+-- Users can view their own profile
+DO $$ BEGIN
+  CREATE POLICY "profiles_view_own"
+  ON profiles FOR SELECT
+  USING (id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
--- Create a trigger to update the updated_at timestamp
-CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- Admins can view all profiles
+DO $$ BEGIN
+  CREATE POLICY "profiles_admin_view_all"
+  ON profiles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
--- Add the trigger to all tables with updated_at
-CREATE OR REPLACE TRIGGER update_profiles_updated_at
-  BEFORE UPDATE ON profiles
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Users can insert their own profile
+DO $$ BEGIN
+  CREATE POLICY "profiles_insert_own"
+  ON profiles FOR INSERT
+  WITH CHECK (id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE OR REPLACE TRIGGER update_wardrobe_items_updated_at
-  BEFORE UPDATE ON wardrobe_items
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Users can update their own profile
+DO $$ BEGIN
+  CREATE POLICY "profiles_update_own"
+  ON profiles FOR UPDATE
+  USING (id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE OR REPLACE TRIGGER update_outfits_updated_at
-  BEFORE UPDATE ON outfits
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Admins can update all profiles
+DO $$ BEGIN
+  CREATE POLICY "profiles_admin_update_all"
+  ON profiles FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE OR REPLACE TRIGGER update_style_preferences_updated_at
-  BEFORE UPDATE ON style_preferences
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- WARDROBE ITEMS POLICIES
+-- Users can view their own wardrobe items
+DO $$ BEGIN
+  CREATE POLICY "wardrobe_items_view_own"
+  ON wardrobe_items FOR SELECT
+  USING (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
--- FUNCTIONS
--- Function to get recommended outfits for a user
-CREATE OR REPLACE FUNCTION get_recommended_outfits(user_id UUID)
-RETURNS TABLE (
-  outfit_id UUID,
-  outfit_name TEXT,
-  outfit_description TEXT,
-  occasion TEXT,
-  season TEXT,
-  confidence_score FLOAT
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-    r.outfit_id,
-    o.name as outfit_name,
-    o.description as outfit_description,
-    r.occasion,
-    r.season,
-    r.confidence_score
-  FROM 
-    outfit_recommendations r
-  JOIN
-    outfits o ON r.outfit_id = o.id
-  WHERE 
-    r.user_id = get_recommended_outfits.user_id
-    AND r.is_saved = FALSE
-  ORDER BY 
-    r.created_at DESC, r.confidence_score DESC
-  LIMIT 10;
-END;
-$$;
+-- Users can insert their own wardrobe items
+DO $$ BEGIN
+  CREATE POLICY "wardrobe_items_insert_own"
+  ON wardrobe_items FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+-- Users can update their own wardrobe items
+DO $$ BEGIN
+  CREATE POLICY "wardrobe_items_update_own"
+  ON wardrobe_items FOR UPDATE
+  USING (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+-- Users can delete their own wardrobe items
+DO $$ BEGIN
+  CREATE POLICY "wardrobe_items_delete_own"
+  ON wardrobe_items FOR DELETE
+  USING (user_id = auth.uid());
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+-- Admins can view all wardrobe items
+DO $$ BEGIN
+  CREATE POLICY "wardrobe_items_admin_view_all"
+  ON wardrobe_items FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+-- Admins can update all wardrobe items
+DO $$ BEGIN
+  CREATE POLICY "wardrobe_items_admin_update_all"
+  ON wardrobe_items FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+-- Admins can delete all wardrobe items
+DO $$ BEGIN
+  CREATE POLICY "wardrobe_items_admin_delete_all"
+  ON wardrobe_items FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.role_id = 2
+    )
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;

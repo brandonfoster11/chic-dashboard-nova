@@ -76,28 +76,52 @@
 
 ### Security
 
-### Dependency Vulnerabilities
+#### Dependency Vulnerabilities
 
 Current vulnerabilities identified via `npm audit`:
 
-- **esbuild <=0.24.2**: Moderate severity - enables any website to send requests to the development server and read the response
-- **vite 0.11.0-6.1.4**: Depends on vulnerable versions of esbuild
+- ~~**esbuild <=0.24.2**: Moderate severity - enables any website to send requests to the development server and read the response~~
+- ~~**vite 0.11.0-6.1.4**: Depends on vulnerable versions of esbuild~~
 
 **Action Plan:**
-- [ ] Update Vite to the latest version (>= 6.1.5) to resolve esbuild vulnerability
+- ✅ Update Vite to the latest version (>= 6.1.5) to resolve esbuild vulnerability (Current: v6.2.5)
 - [ ] Set up GitHub Dependabot for automated security alerts and dependency updates
 - [ ] Implement a pre-commit hook to run security audits
 - [ ] Schedule monthly dependency reviews
 
-### Authentication & Authorization
+#### Authentication & Authorization
 
-- [x] Implemented Supabase authentication with email/password
-- [x] Set up Row Level Security (RLS) policies for all database tables
-- [ ] Implement role-based access control for admin features
-- [ ] Add multi-factor authentication option
+- ✅ Implemented Supabase authentication with email/password
+- ✅ Set up Row Level Security (RLS) policies for all database tables
+- ✅ Implemented role-based access control with roles table and admin policies
+- ✅ Added role_id field to profiles table with default user role
+- [ ] Add multi-factor authentication option (MFA logging infrastructure is in place)
 - [ ] Create comprehensive security testing suite
 
-### Data Validation
+#### Data Security & Privacy
+
+- ✅ Implemented CCPA compliance functions for user data management
+  - ✅ Added data export functionality (right to access)
+  - ✅ Added data deletion capability (right to delete)
+  - ✅ Added data anonymization features (alternative to deletion)
+- ✅ Created secure storage policies for wardrobe images
+  - ✅ Set up secure storage bucket with 5MB limit
+  - ✅ Implemented RLS policies for user-specific access
+  - ✅ Added secure upload path generation function
+- ✅ Implemented MFA logging infrastructure
+  - ✅ Created MFA logs table with appropriate RLS policies
+  - ✅ Added triggers for authentication event logging
+- [ ] Implement Privacy component with CCPA rights management UI
+
+#### Security Files Deployed
+
+- ✅ schema.sql - Core database schema with RLS policies
+- ✅ roles-security.sql - RLS for roles table
+- ✅ auth-setup.sql - MFA logging setup
+- ✅ storage-policies.sql - Secure storage policies
+- ✅ ccpa-compliance.sql - CCPA compliance functions
+
+#### Data Validation
 
 - [x] Implemented Zod for schema validation
 - [ ] Add input sanitization for all user inputs
