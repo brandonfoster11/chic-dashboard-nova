@@ -5,6 +5,22 @@
 -- Enable UUID extension if not already enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- ROLES TABLE
+-- Defines user roles for role-based access control
+CREATE TABLE IF NOT EXISTS roles (
+  id SERIAL PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert default roles
+INSERT INTO roles (name, description) 
+VALUES 
+  ('user', 'Regular user with standard permissions'),
+  ('admin', 'Administrator with full access to all features')
+ON CONFLICT (name) DO NOTHING;
+
 -- PROFILES TABLE
 -- Extends the auth.users table with additional user information
 CREATE TABLE IF NOT EXISTS profiles (
@@ -12,6 +28,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   username TEXT UNIQUE,
   full_name TEXT,
   avatar_url TEXT,
+  role_id INTEGER REFERENCES roles(id) DEFAULT 1, -- Default to 'user' role
   style_preferences JSONB DEFAULT '{}',
   body_measurements JSONB DEFAULT '{}',
   onboarding_completed BOOLEAN DEFAULT FALSE,
@@ -151,6 +168,16 @@ CREATE POLICY "Users can view their own profile"
 ON profiles FOR SELECT
 USING (id = auth.uid());
 
+-- Admins can view all profiles
+CREATE POLICY "Admins can view all profiles"
+ON profiles FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
 -- Users can insert their own profile
 CREATE POLICY "Users can insert their own profile"
 ON profiles FOR INSERT
@@ -160,6 +187,16 @@ WITH CHECK (id = auth.uid());
 CREATE POLICY "Users can update their own profile"
 ON profiles FOR UPDATE
 USING (id = auth.uid());
+
+-- Admins can update all profiles
+CREATE POLICY "Admins can update all profiles"
+ON profiles FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
 
 -- WARDROBE ITEMS POLICIES
 -- Users can view their own wardrobe items
@@ -181,6 +218,46 @@ USING (user_id = auth.uid());
 CREATE POLICY "Users can delete their own wardrobe items"
 ON wardrobe_items FOR DELETE
 USING (user_id = auth.uid());
+
+-- Admins can view all wardrobe items
+CREATE POLICY "Admins can view all wardrobe items"
+ON wardrobe_items FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can insert all wardrobe items
+CREATE POLICY "Admins can insert all wardrobe items"
+ON wardrobe_items FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can update all wardrobe items
+CREATE POLICY "Admins can update all wardrobe items"
+ON wardrobe_items FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can delete all wardrobe items
+CREATE POLICY "Admins can delete all wardrobe items"
+ON wardrobe_items FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
 
 -- OUTFITS POLICIES
 -- Users can view their own outfits or shared with them
@@ -208,6 +285,46 @@ USING (user_id = auth.uid());
 CREATE POLICY "Users can delete their own outfits"
 ON outfits FOR DELETE
 USING (user_id = auth.uid());
+
+-- Admins can view all outfits
+CREATE POLICY "Admins can view all outfits"
+ON outfits FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can insert all outfits
+CREATE POLICY "Admins can insert all outfits"
+ON outfits FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can update all outfits
+CREATE POLICY "Admins can update all outfits"
+ON outfits FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can delete all outfits
+CREATE POLICY "Admins can delete all outfits"
+ON outfits FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
 
 -- OUTFIT ITEMS POLICIES
 -- Users can view items in their own outfits or shared with them
@@ -254,6 +371,46 @@ USING (
   )
 );
 
+-- Admins can view all outfit items
+CREATE POLICY "Admins can view all outfit items"
+ON outfit_items FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can insert all outfit items
+CREATE POLICY "Admins can insert all outfit items"
+ON outfit_items FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can update all outfit items
+CREATE POLICY "Admins can update all outfit items"
+ON outfit_items FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can delete all outfit items
+CREATE POLICY "Admins can delete all outfit items"
+ON outfit_items FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
 -- STYLE PREFERENCES POLICIES
 -- Users can view their own style preferences
 CREATE POLICY "Users can view their own style preferences"
@@ -269,6 +426,36 @@ WITH CHECK (user_id = auth.uid());
 CREATE POLICY "Users can update their own style preferences"
 ON style_preferences FOR UPDATE
 USING (user_id = auth.uid());
+
+-- Admins can view all style preferences
+CREATE POLICY "Admins can view all style preferences"
+ON style_preferences FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can insert all style preferences
+CREATE POLICY "Admins can insert all style preferences"
+ON style_preferences FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can update all style preferences
+CREATE POLICY "Admins can update all style preferences"
+ON style_preferences FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
 
 -- OUTFIT SHARES POLICIES
 -- Users can view outfits shared by them or with them
@@ -291,6 +478,36 @@ CREATE POLICY "Users can delete shares they created"
 ON outfit_shares FOR DELETE
 USING (shared_by = auth.uid());
 
+-- Admins can view all outfit shares
+CREATE POLICY "Admins can view all outfit shares"
+ON outfit_shares FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can insert all outfit shares
+CREATE POLICY "Admins can insert all outfit shares"
+ON outfit_shares FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can delete all outfit shares
+CREATE POLICY "Admins can delete all outfit shares"
+ON outfit_shares FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
 -- OUTFIT RECOMMENDATIONS POLICIES
 -- Users can view their own recommendations
 CREATE POLICY "Users can view their own recommendations"
@@ -301,6 +518,36 @@ USING (user_id = auth.uid());
 CREATE POLICY "Users can update their own recommendations"
 ON outfit_recommendations FOR UPDATE
 USING (user_id = auth.uid());
+
+-- Admins can view all outfit recommendations
+CREATE POLICY "Admins can view all outfit recommendations"
+ON outfit_recommendations FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can insert all outfit recommendations
+CREATE POLICY "Admins can insert all outfit recommendations"
+ON outfit_recommendations FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
+
+-- Admins can update all outfit recommendations
+CREATE POLICY "Admins can update all outfit recommendations"
+ON outfit_recommendations FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role_id = 2
+  )
+);
 
 -- TRIGGERS
 -- Create a trigger to automatically create a profile entry when a new user signs up
