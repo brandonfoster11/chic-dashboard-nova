@@ -3,13 +3,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { NeumorphicCard } from "@/components/ui/neumorphic-card";
 import { NeumorphicButton } from "@/components/ui/neumorphic-button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const onboardingSteps = [
   {
@@ -189,7 +190,7 @@ const onboardingSteps = [
 ];
 
 const Onboarding = () => {
-  const { data, updateData, currentStep, setCurrentStep, totalSteps } = useOnboarding();
+  const { data, updateData, currentStep, setCurrentStep, totalSteps, savePreferences } = useOnboarding();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -207,12 +208,25 @@ const Onboarding = () => {
     }
 
     if (currentStep === totalSteps) {
-      toast({
-        title: "Setup complete!",
-        description: "Your profile has been created successfully.",
-        duration: 3000,
+      // Save the user's preferences to their profile
+      savePreferences().then((success) => {
+        if (success) {
+          toast({
+            title: "Setup complete!",
+            description: "Your profile has been created successfully.",
+            duration: 3000,
+          });
+          navigate("/dashboard");
+        } else {
+          toast({
+            title: "Error saving preferences",
+            description: "There was an error saving your preferences. You can update them later in your profile settings.",
+            variant: "destructive",
+            duration: 5000,
+          });
+          navigate("/dashboard");
+        }
       });
-      navigate("/tour");
     } else {
       setCurrentStep(currentStep + 1);
     }
@@ -230,7 +244,7 @@ const Onboarding = () => {
       description: "You can always complete your profile later.",
       duration: 3000,
     });
-    navigate("/tour");
+    navigate("/dashboard");
   };
 
   // Check if this step should be shown based on conditional logic
@@ -240,8 +254,13 @@ const Onboarding = () => {
     return showWhen.includes(data[dependsOn as keyof typeof data] as string);
   };
 
+  useEffect(() => {
+    if (!shouldShowStep()) {
+      handleNext();
+    }
+  }, [currentStepData, data]);
+
   if (!shouldShowStep()) {
-    handleNext();
     return null;
   }
 

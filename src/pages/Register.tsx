@@ -51,7 +51,7 @@ const Register = () => {
   const onSubmit = async (values: RegisterFormValues) => {
     try {
       setAuthError(null);
-      await register(values.email, values.password);
+      await register(values.name, values.email, values.password);
       
       toast({
         title: "Registration successful",

@@ -26,6 +26,7 @@ import Community from "./pages/Community";
 import Search from "./pages/Search";
 import ItemDetails from "./pages/ItemDetails";
 import StyleQuiz from "./pages/StyleQuiz";
+import DatabaseInspector from "./pages/admin/DbInspect";
 
 const App = () => (
   <>
@@ -58,6 +59,7 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/item/:id" element={<ItemDetails />} />
           <Route path="/style-quiz" element={<StyleQuiz />} />
+          <Route path="/admin/db-inspect" element={<DatabaseInspector />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

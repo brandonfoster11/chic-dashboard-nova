@@ -18,13 +18,16 @@ export const NeumorphicStyleCard = ({
   animate = false,
   delay = 0
 }: NeumorphicStyleCardProps) => {
+  // We'll use a different name for the prop we pass to NeumorphicCard
+  // to avoid confusion with the animate prop for motion.div
   const content = (
     <NeumorphicCard 
       className={cn("overflow-hidden", className)}
       variant="elevated"
       hover="glow"
       padding="lg"
-      animate={animate}
+      // Don't pass the animate prop to NeumorphicCard when we're using motion.div
+      animate={false}
       delay={delay}
     >
       <div className="space-y-4">

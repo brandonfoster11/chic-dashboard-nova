@@ -54,7 +54,7 @@ export class WardrobeService implements IWardrobeService {
         }
       }
 
-      const { data, error } = await query.order('dateAdded', { ascending: false });
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -86,7 +86,7 @@ export class WardrobeService implements IWardrobeService {
     try {
       const newItem = {
         ...item,
-        dateAdded: new Date().toISOString(),
+        created_at: new Date().toISOString(),
         wearCount: 0,
         favorite: item.favorite || false,
         tags: item.tags || [],
@@ -145,7 +145,7 @@ export class WardrobeService implements IWardrobeService {
       const { data: items, error } = await supabase
         .from('wardrobe_items')
         .select('*')
-        .order('dateAdded', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -173,7 +173,7 @@ export class WardrobeService implements IWardrobeService {
 
       // Get recently added items (top 5)
       const recentlyAdded = wardrobeItems
-        .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 5);
 
       // Get favorite items

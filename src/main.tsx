@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { OnboardingProvider } from "@/context/OnboardingContext";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OutfitProvider } from "@/contexts/OutfitContext";
 import { QueryProvider } from "@/lib/react-query/QueryProvider";

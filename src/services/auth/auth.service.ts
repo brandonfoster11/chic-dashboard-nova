@@ -42,14 +42,22 @@ export class AuthService {
     }
   }
 
-  async signUp(email: string, password: string): Promise<AuthState> {
+  async signUp(email: string, password: string, name?: string): Promise<AuthState> {
     try {
       const { data: { user }, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            full_name: name || '',
+          }
+        }
       })
 
       if (error) throw error
+
+      // The profile will be created automatically by the database trigger
+      // No need to manually create it here
 
       return {
         user,
