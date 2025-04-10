@@ -28,6 +28,8 @@ export class WardrobeService implements IWardrobeService {
 
   async getWardrobeItems(filters?: WardrobeFilters): Promise<WardrobeItem[]> {
     try {
+      console.log('WardrobeService: Fetching wardrobe items with filters:', filters);
+      
       let query = supabase
         .from('wardrobe_items')
         .select('*');
@@ -36,31 +38,58 @@ export class WardrobeService implements IWardrobeService {
       if (filters) {
         if (filters.type && filters.type.length > 0) {
           query = query.in('type', filters.type);
+          console.log('WardrobeService: Applied type filter:', filters.type);
         }
         if (filters.color && filters.color.length > 0) {
           query = query.in('color', filters.color);
+          console.log('WardrobeService: Applied color filter:', filters.color);
         }
         if (filters.brand && filters.brand.length > 0) {
           query = query.in('brand', filters.brand);
+          console.log('WardrobeService: Applied brand filter:', filters.brand);
         }
         if (filters.tags && filters.tags.length > 0) {
           // For tags, we need to check if any of the tags in the array match
           // This assumes tags are stored as an array in Supabase
           query = query.contains('tags', filters.tags);
+          console.log('WardrobeService: Applied tags filter:', filters.tags);
         }
         if (filters.favorite !== undefined) {
           query = query.eq('favorite', filters.favorite);
+          console.log('WardrobeService: Applied favorite filter:', filters.favorite);
         }
         if (filters.search) {
-          query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+          // Search by name, description, or brand
+          query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,brand.ilike.%${filters.search}%`);
+          console.log('WardrobeService: Applied search filter:', filters.search);
         }
       }
 
+      // Get data from Supabase
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('WardrobeService: Error fetching wardrobe items:', error);
+        throw error;
+      }
 
-      return data as WardrobeItem[];
+      console.log('WardrobeService: Successfully fetched wardrobe items:', data?.length || 0, 'items');
+      
+      // Map the data to WardrobeItem interface
+      return data?.map(item => ({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        color: item.color,
+        imageUrl: item.image_url,
+        description: item.description || '',
+        brand: item.brand || '',
+        tags: item.tags || [],
+        favorite: item.favorite || false,
+        wearCount: item.wear_count || 0,
+        dateAdded: item.created_at,
+        lastModified: item.updated_at
+      })) || [];
     } catch (error) {
       console.error('Error fetching wardrobe items:', error);
       return [];

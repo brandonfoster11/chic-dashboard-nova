@@ -103,10 +103,14 @@ export function OutfitProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useOutfit() {
+function useOutfit() {
   const context = useContext(OutfitContext);
   if (context === undefined) {
     throw new Error('useOutfit must be used within an OutfitProvider');
   }
   return context;
 }
+
+// Export the hook as a named export from the file
+// This ensures compatibility with Fast Refresh
+export { useOutfit };

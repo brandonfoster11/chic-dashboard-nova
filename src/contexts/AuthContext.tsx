@@ -51,12 +51,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+      console.log('AuthContext: Attempting login for email:', email);
       const result = await authService.signIn(email, password);
+      
       if (result.error) {
+        console.error('AuthContext: Login error:', result.error);
+        setError(result.error);
         throw new Error(result.error);
       }
+      
+      if (!result.user) {
+        console.error('AuthContext: No user returned from login');
+        setError('Login failed. Please try again.');
+        throw new Error('Login failed. No user returned.');
+      }
+      
+      console.log('AuthContext: Login successful');
       setUser(result.user);
     } catch (err) {
+      console.error('AuthContext: Login exception:', err);
       setError(err instanceof Error ? err.message : 'Failed to login');
       throw err;
     } finally {
@@ -128,10 +141,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
+
+// Export the hook as a named export from the file
+// This ensures compatibility with Fast Refresh
+export { useAuth };
