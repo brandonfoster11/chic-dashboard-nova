@@ -1,0 +1,42 @@
+[
+  {
+    "id": "pref-1",
+    "user_id": "user-dev-1",
+    "style_type": "casual",
+    "value": 8,
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "pref-2",
+    "user_id": "user-dev-1",
+    "style_type": "formal",
+    "value": 6,
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "pref-3",
+    "user_id": "user-dev-1",
+    "style_type": "sporty",
+    "value": 4,
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "pref-4",
+    "user_id": "user-dev-1",
+    "style_type": "bohemian",
+    "value": 3,
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "pref-5",
+    "user_id": "user-dev-1",
+    "style_type": "minimalist",
+    "value": 7,
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z"
+  }
+]

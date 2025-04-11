@@ -1,11 +1,12 @@
 export interface OutfitItem {
   id: string;
   name: string;
-  type: 'top' | 'bottom' | 'shoes' | 'accessory';
+  type: 'top' | 'bottom' | 'shoes' | 'accessory' | 'outerwear' | 'footwear';
   imageUrl: string;
   color: string;
   brand?: string;
   description?: string;
+  price?: number;
 }
 
 export interface GeneratedOutfit {

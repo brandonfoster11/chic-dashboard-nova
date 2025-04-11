@@ -1,9 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { WardrobeFilters, WardrobeItem, WardrobeService } from '@/services/wardrobe/types';
-import { WardrobeService as WardrobeServiceImpl } from '@/services/wardrobe/wardrobe.service';
-
-// Create a singleton instance of the wardrobe service
-const wardrobeService = WardrobeServiceImpl.getInstance();
+import { WardrobeFilters, WardrobeItem } from '@/services/wardrobe/types';
+import { WardrobeService } from '@/services/service-factory';
 
 // Query keys for caching
 export const wardrobeKeys = {
@@ -16,18 +13,18 @@ export const wardrobeKeys = {
 
 // Hook for fetching all wardrobe items with optional filters
 export function useWardrobeItems(filters?: WardrobeFilters) {
-  return useQuery({
+  return useQuery<WardrobeItem[]>({
     queryKey: filters ? wardrobeKeys.filtered(filters) : wardrobeKeys.items(),
-    queryFn: () => wardrobeService.getWardrobeItems(filters),
+    queryFn: () => WardrobeService.getWardrobeItems(filters),
   });
 }
 
 // Hook for fetching a single wardrobe item by ID
 export function useWardrobeItem(id: string) {
-  return useQuery({
+  return useQuery<WardrobeItem>({
     queryKey: wardrobeKeys.item(id),
-    queryFn: () => wardrobeService.getWardrobeItem(id),
-    enabled: !!id, // Only run the query if an ID is provided
+    queryFn: () => WardrobeService.getWardrobeItem(id),
+    enabled: !!id,
   });
 }
 
@@ -35,7 +32,7 @@ export function useWardrobeItem(id: string) {
 export function useWardrobeStats() {
   return useQuery({
     queryKey: wardrobeKeys.stats(),
-    queryFn: () => wardrobeService.getWardrobeStats(),
+    queryFn: () => WardrobeService.getWardrobeStats(),
   });
 }
 
@@ -43,10 +40,9 @@ export function useWardrobeStats() {
 export function useAddWardrobeItem() {
   const queryClient = useQueryClient();
   
-  return useMutation({
-    mutationFn: (item: Omit<WardrobeItem, 'id'>) => wardrobeService.addWardrobeItem(item),
+  return useMutation<WardrobeItem, Error, Omit<WardrobeItem, 'id'>>({
+    mutationFn: (item: Omit<WardrobeItem, 'id'>) => WardrobeService.addWardrobeItem(item),
     onSuccess: () => {
-      // Invalidate the wardrobe items query to refetch the latest data
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.items() });
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.stats() });
     },
@@ -57,15 +53,12 @@ export function useAddWardrobeItem() {
 export function useUpdateWardrobeItem() {
   const queryClient = useQueryClient();
   
-  return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<WardrobeItem> }) => 
-      wardrobeService.updateWardrobeItem(id, updates),
+  return useMutation<WardrobeItem, Error, { id: string, updates: Partial<WardrobeItem> }>({
+    mutationFn: ({ id, updates }: { id: string, updates: Partial<WardrobeItem> }) => 
+      WardrobeService.updateWardrobeItem(id, updates),
     onSuccess: (updatedItem) => {
-      // Update the item in the cache
-      queryClient.setQueryData(wardrobeKeys.item(updatedItem.id), updatedItem);
-      
-      // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.items() });
+      queryClient.invalidateQueries({ queryKey: wardrobeKeys.item(updatedItem.id) });
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.stats() });
     },
   });
@@ -75,14 +68,11 @@ export function useUpdateWardrobeItem() {
 export function useRemoveWardrobeItem() {
   const queryClient = useQueryClient();
   
-  return useMutation({
-    mutationFn: (id: string) => wardrobeService.removeWardrobeItem(id),
+  return useMutation<void, Error, string>({
+    mutationFn: (id: string) => WardrobeService.removeWardrobeItem(id),
     onSuccess: (_, id) => {
-      // Remove the item from the cache
-      queryClient.removeQueries({ queryKey: wardrobeKeys.item(id) });
-      
-      // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.items() });
+      queryClient.invalidateQueries({ queryKey: wardrobeKeys.item(id) });
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.stats() });
     },
   });
@@ -92,14 +82,11 @@ export function useRemoveWardrobeItem() {
 export function useToggleFavorite() {
   const queryClient = useQueryClient();
   
-  return useMutation({
-    mutationFn: (id: string) => wardrobeService.toggleFavorite(id),
+  return useMutation<WardrobeItem, Error, string>({
+    mutationFn: (id: string) => WardrobeService.toggleFavorite(id),
     onSuccess: (updatedItem) => {
-      // Update the item in the cache
-      queryClient.setQueryData(wardrobeKeys.item(updatedItem.id), updatedItem);
-      
-      // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.items() });
+      queryClient.invalidateQueries({ queryKey: wardrobeKeys.item(updatedItem.id) });
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.stats() });
     },
   });
@@ -109,14 +96,11 @@ export function useToggleFavorite() {
 export function useIncrementWearCount() {
   const queryClient = useQueryClient();
   
-  return useMutation({
-    mutationFn: (id: string) => wardrobeService.incrementWearCount(id),
+  return useMutation<WardrobeItem, Error, string>({
+    mutationFn: (id: string) => WardrobeService.incrementWearCount(id),
     onSuccess: (updatedItem) => {
-      // Update the item in the cache
-      queryClient.setQueryData(wardrobeKeys.item(updatedItem.id), updatedItem);
-      
-      // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.items() });
+      queryClient.invalidateQueries({ queryKey: wardrobeKeys.item(updatedItem.id) });
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.stats() });
     },
   });

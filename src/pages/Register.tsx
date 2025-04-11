@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { NeumorphicCard } from "@/components/ui/neumorphic-card";
 import { NeumorphicButton } from "@/components/ui/neumorphic-button";
 import { motion } from "framer-motion";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ const Register = () => {
       email: "",
       password: "",
       confirmPassword: "",
+      terms: false,
     },
   });
 
@@ -49,10 +51,13 @@ const Register = () => {
   };
 
   const onSubmit = async (values: RegisterFormValues) => {
+    console.log('Register: onSubmit called with values:', values);
     try {
       setAuthError(null);
+      console.log('Register: Calling register function...');
       await register(values.name, values.email, values.password);
       
+      console.log('Register: Registration successful, navigating to onboarding');
       toast({
         title: "Registration successful",
         description: "Welcome to StyleAI! Let's set up your profile.",
@@ -61,6 +66,7 @@ const Register = () => {
       
       navigate("/onboarding");
     } catch (error) {
+      console.error('Register: Registration failed with error:', error);
       const errorMessage = error instanceof Error ? error.message : "Failed to register";
       setAuthError(errorMessage);
       
@@ -225,6 +231,29 @@ const Register = () => {
                         </div>
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+              
+              <motion.div variants={itemVariants}>
+                <FormField
+                  control={form.control}
+                  name="terms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal">
+                          I accept the <Link to="/terms" className="text-primary hover:underline">terms and conditions</Link>
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
                     </FormItem>
                   )}
                 />

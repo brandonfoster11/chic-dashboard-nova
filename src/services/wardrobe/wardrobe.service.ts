@@ -1,95 +1,65 @@
-import { supabase } from '@/utils/supabase';
-import { WardrobeFilters, WardrobeItem, WardrobeService as IWardrobeService, WardrobeStats } from './types';
+import { WardrobeFilters, WardrobeItem, WardrobeService as IWardrobeService, WardrobeStats, WardrobeCategory } from './types';
 import { validateData } from '@/lib/middleware/validation';
 import { createWardrobeItemSchema, updateWardrobeItemSchema } from '@/lib/validations/wardrobe';
+import { mockWardrobeItems } from './wardrobe.service.mock';
+import { toast } from '@/components/ui/use-toast';
 
-export interface CreateWardrobeItemDTO {
-  name: string;
-  type: string;
-  color: string;
-  imageUrl?: string;
-  description?: string;
-  brand?: string;
-  tags?: string[];
-  favorite?: boolean;
-}
+// Helper function to convert data types between interfaces
+const convertDataItem = (item: any): WardrobeItem => {
+  return {
+    id: item.id,
+    name: item.name,
+    type: item.type,
+    color: item.color,
+    imageUrl: item.image_url,
+    description: item.description || '',
+    brand: item.brand || '',
+    tags: item.tags || [],
+    favorite: item.favorite || false,
+    wearCount: item.wear_count || 0,
+    dateAdded: item.created_at,
+    lastWorn: item.last_worn
+  };
+};
 
 export class WardrobeService implements IWardrobeService {
-  private static instance: WardrobeService;
-
-  private constructor() {}
-
-  public static getInstance(): WardrobeService {
-    if (!WardrobeService.instance) {
-      WardrobeService.instance = new WardrobeService();
-    }
-    return WardrobeService.instance;
-  }
-
   async getWardrobeItems(filters?: WardrobeFilters): Promise<WardrobeItem[]> {
     try {
-      console.log('WardrobeService: Fetching wardrobe items with filters:', filters);
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      let query = supabase
-        .from('wardrobe_items')
-        .select('*');
-
+      let items = [...mockWardrobeItems];
+      
       // Apply filters if provided
       if (filters) {
         if (filters.type && filters.type.length > 0) {
-          query = query.in('type', filters.type);
-          console.log('WardrobeService: Applied type filter:', filters.type);
+          items = items.filter(item => filters.type?.includes(item.type));
         }
         if (filters.color && filters.color.length > 0) {
-          query = query.in('color', filters.color);
-          console.log('WardrobeService: Applied color filter:', filters.color);
+          items = items.filter(item => filters.color?.includes(item.color));
         }
         if (filters.brand && filters.brand.length > 0) {
-          query = query.in('brand', filters.brand);
-          console.log('WardrobeService: Applied brand filter:', filters.brand);
+          items = items.filter(item => item.brand && filters.brand?.includes(item.brand));
         }
         if (filters.tags && filters.tags.length > 0) {
-          // For tags, we need to check if any of the tags in the array match
-          // This assumes tags are stored as an array in Supabase
-          query = query.contains('tags', filters.tags);
-          console.log('WardrobeService: Applied tags filter:', filters.tags);
+          items = items.filter(item => 
+            item.tags && filters.tags?.some(tag => item.tags.includes(tag))
+          );
         }
         if (filters.favorite !== undefined) {
-          query = query.eq('favorite', filters.favorite);
-          console.log('WardrobeService: Applied favorite filter:', filters.favorite);
+          items = items.filter(item => item.favorite === filters.favorite);
         }
         if (filters.search) {
-          // Search by name, description, or brand
-          query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,brand.ilike.%${filters.search}%`);
-          console.log('WardrobeService: Applied search filter:', filters.search);
+          const search = filters.search.toLowerCase();
+          items = items.filter(item => 
+            item.name.toLowerCase().includes(search) || 
+            (item.description && item.description.toLowerCase().includes(search)) ||
+            (item.brand && item.brand.toLowerCase().includes(search))
+          );
         }
       }
-
-      // Get data from Supabase
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('WardrobeService: Error fetching wardrobe items:', error);
-        throw error;
-      }
-
-      console.log('WardrobeService: Successfully fetched wardrobe items:', data?.length || 0, 'items');
       
-      // Map the data to WardrobeItem interface
-      return data?.map(item => ({
-        id: item.id,
-        name: item.name,
-        type: item.type,
-        color: item.color,
-        imageUrl: item.image_url,
-        description: item.description || '',
-        brand: item.brand || '',
-        tags: item.tags || [],
-        favorite: item.favorite || false,
-        wearCount: item.wear_count || 0,
-        dateAdded: item.created_at,
-        lastModified: item.updated_at
-      })) || [];
+      return items.map(convertDataItem);
     } catch (error) {
       console.error('Error fetching wardrobe items:', error);
       return [];
@@ -98,27 +68,28 @@ export class WardrobeService implements IWardrobeService {
 
   async getWardrobeItem(id: string): Promise<WardrobeItem> {
     try {
-      const { data, error } = await supabase
-        .from('wardrobe_items')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      return data as WardrobeItem;
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const item = mockWardrobeItems.find(item => item.id === id);
+      
+      if (!item) {
+        throw new Error(`Wardrobe item with id ${id} not found`);
+      }
+      
+      return convertDataItem(item);
     } catch (error) {
       console.error('Error fetching wardrobe item:', error);
       throw new Error(`Failed to fetch wardrobe item with id ${id}`);
     }
   }
 
-  async addWardrobeItem(item: CreateWardrobeItemDTO): Promise<WardrobeItem | null> {
+  async addWardrobeItem(item: Omit<WardrobeItem, 'id'>): Promise<WardrobeItem> {
     try {
-      // Validate and sanitize input data
-      const validationResult = validateData(createWardrobeItemSchema, {
+      // Validate the data
+      validateData(createWardrobeItemSchema, {
         name: item.name,
-        category: item.type, // Map type to category for validation
+        type: item.type,
         color: item.color,
         image_url: item.imageUrl,
         description: item.description,
@@ -126,152 +97,174 @@ export class WardrobeService implements IWardrobeService {
         tags: item.tags,
         favorite: item.favorite || false
       });
-
-      // If validation fails, return null
-      if (!validationResult.success) {
-        console.error('Validation failed:', validationResult.errors);
-        return null;
-      }
-
-      // Use the validated and sanitized data
-      const validatedData = validationResult.data;
       
-      const { data, error } = await supabase
-        .from('wardrobe_items')
-        .insert({
-          name: validatedData.name,
-          type: validatedData.category, // Map category back to type
-          color: validatedData.color,
-          image_url: validatedData.image_url,
-          description: validatedData.description,
-          brand: validatedData.brand,
-          tags: validatedData.tags || [],
-          favorite: validatedData.favorite || false,
-          dateAdded: new Date().toISOString(),
-          wearCount: 0
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error adding wardrobe item:', error);
-        return null;
-      }
-
-      return data as WardrobeItem;
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Create a new item with a mock ID
+      const newItem = {
+        id: `wardrobe-item-${Date.now()}`,
+        user_id: 'mock-user-id',
+        name: item.name,
+        type: item.type as any,
+        color: item.color,
+        image_url: item.imageUrl,
+        description: item.description,
+        brand: item.brand,
+        tags: item.tags || [],
+        favorite: item.favorite || false,
+        wear_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_worn: undefined
+      };
+      
+      // Add to mock data
+      mockWardrobeItems.unshift(newItem);
+      
+      // Show success toast
+      toast({
+        title: "Item Added",
+        description: `${item.name} has been added to your wardrobe.`,
+      });
+      
+      return convertDataItem(newItem);
     } catch (error) {
       console.error('Error adding wardrobe item:', error);
-      return null;
+      toast({
+        title: "Error",
+        description: `Failed to add item: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+      throw error;
     }
   }
 
-  async updateWardrobeItem(id: string, updates: Partial<WardrobeItem>): Promise<WardrobeItem | null> {
+  async updateWardrobeItem(id: string, updates: Partial<WardrobeItem>): Promise<WardrobeItem> {
     try {
-      // Validate and sanitize input data
-      const validationResult = validateData(updateWardrobeItemSchema, {
+      // Validate the data
+      validateData(updateWardrobeItemSchema, {
         id,
         ...updates,
-        // Map type to category for validation if it exists
-        ...(updates.type && { category: updates.type })
+        // Map imageUrl to image_url for validation
+        ...(updates.imageUrl && { image_url: updates.imageUrl })
       });
-
-      // If validation fails, return null
-      if (!validationResult.success) {
-        console.error('Validation failed:', validationResult.errors);
-        return null;
-      }
-
-      // Use the validated and sanitized data
-      const validatedData = validationResult.data;
       
-      // Prepare update data, mapping category back to type if needed
-      const updateData = {
-        ...validatedData,
-        ...(validatedData.category && { type: validatedData.category }),
-        // Use the correct property name based on the WardrobeItem interface
-        lastModified: new Date().toISOString()
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      // Find the item to update
+      const itemIndex = mockWardrobeItems.findIndex(item => item.id === id);
+      
+      if (itemIndex === -1) {
+        throw new Error(`Wardrobe item with id ${id} not found`);
+      }
+      
+      // Update the item
+      const updatedItem = {
+        ...mockWardrobeItems[itemIndex],
+        name: updates.name || mockWardrobeItems[itemIndex].name,
+        type: (updates.type as any) || mockWardrobeItems[itemIndex].type,
+        color: updates.color || mockWardrobeItems[itemIndex].color,
+        image_url: updates.imageUrl || mockWardrobeItems[itemIndex].image_url,
+        description: updates.description !== undefined ? updates.description : mockWardrobeItems[itemIndex].description,
+        brand: updates.brand !== undefined ? updates.brand : mockWardrobeItems[itemIndex].brand,
+        tags: updates.tags || mockWardrobeItems[itemIndex].tags,
+        favorite: updates.favorite !== undefined ? updates.favorite : mockWardrobeItems[itemIndex].favorite,
+        updated_at: new Date().toISOString()
       };
       
-      // Remove category from update data to avoid DB schema conflicts
-      if ('category' in updateData) {
-        delete updateData.category;
-      }
-
-      const { data, error } = await supabase
-        .from('wardrobe_items')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error updating wardrobe item:', error);
-        return null;
-      }
-
-      return data as WardrobeItem;
+      // Update in mock data
+      mockWardrobeItems[itemIndex] = updatedItem;
+      
+      // Show success toast
+      toast({
+        title: "Item Updated",
+        description: `${updatedItem.name} has been updated.`,
+      });
+      
+      return convertDataItem(updatedItem);
     } catch (error) {
       console.error('Error updating wardrobe item:', error);
-      return null;
+      toast({
+        title: "Error",
+        description: `Failed to update item: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+      throw error;
     }
   }
 
   async removeWardrobeItem(id: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('wardrobe_items')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Find the item to remove
+      const itemIndex = mockWardrobeItems.findIndex(item => item.id === id);
+      
+      if (itemIndex === -1) {
+        throw new Error(`Wardrobe item with id ${id} not found`);
+      }
+      
+      const itemName = mockWardrobeItems[itemIndex].name;
+      
+      // Remove from mock data
+      mockWardrobeItems.splice(itemIndex, 1);
+      
+      // Show success toast
+      toast({
+        title: "Item Removed",
+        description: `${itemName} has been removed from your wardrobe.`,
+      });
     } catch (error) {
       console.error('Error removing wardrobe item:', error);
-      throw new Error(`Failed to remove wardrobe item with id ${id}`);
+      toast({
+        title: "Error",
+        description: `Failed to remove item: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+      throw error;
     }
   }
 
   async getWardrobeStats(): Promise<WardrobeStats> {
     try {
-      // Get all wardrobe items
-      const { data: items, error } = await supabase
-        .from('wardrobe_items')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const wardrobeItems = items as WardrobeItem[];
-
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      const items = await this.getWardrobeItems();
+      
       // Calculate categories
       const categoriesMap = new Map<string, number>();
-      wardrobeItems.forEach(item => {
+      items.forEach(item => {
         const count = categoriesMap.get(item.type) || 0;
         categoriesMap.set(item.type, count + 1);
       });
-
-      const categories = Array.from(categoriesMap.entries()).map(([name, count]) => ({
+      
+      const categories: WardrobeCategory[] = Array.from(categoriesMap.entries()).map(([name, count]) => ({
         id: name,
         name,
         count
       }));
-
+      
       // Find most worn item
-      const mostWorn = wardrobeItems.length > 0 
-        ? wardrobeItems.reduce((prev, current) => 
+      const mostWorn = items.length > 0 
+        ? items.reduce((prev, current) => 
             (prev.wearCount > current.wearCount) ? prev : current
           )
         : null;
-
+      
       // Get recently added items (top 5)
-      const recentlyAdded = wardrobeItems
+      const recentlyAdded = [...items]
         .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
         .slice(0, 5);
-
+      
       // Get favorite items
-      const favorites = wardrobeItems.filter(item => item.favorite);
-
+      const favorites = items.filter(item => item.favorite);
+      
       return {
-        totalItems: wardrobeItems.length,
+        totalItems: items.length,
         categories,
         mostWorn,
         recentlyAdded,
@@ -291,60 +284,58 @@ export class WardrobeService implements IWardrobeService {
 
   async toggleFavorite(id: string): Promise<WardrobeItem> {
     try {
-      // First get the current item to check its favorite status
-      const { data: currentItem, error: fetchError } = await supabase
-        .from('wardrobe_items')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
+      // Get the current item
+      const item = await this.getWardrobeItem(id);
+      
       // Toggle the favorite status
-      const { data, error } = await supabase
-        .from('wardrobe_items')
-        .update({ favorite: !currentItem.favorite })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return data as WardrobeItem;
+      const updatedItem = await this.updateWardrobeItem(id, { 
+        favorite: !item.favorite 
+      });
+      
+      // Show success toast
+      toast({
+        title: item.favorite ? "Removed from Favorites" : "Added to Favorites",
+        description: `${item.name} has been ${item.favorite ? "removed from" : "added to"} your favorites.`,
+      });
+      
+      return updatedItem;
     } catch (error) {
       console.error('Error toggling favorite status:', error);
-      throw new Error(`Failed to toggle favorite status for item with id ${id}`);
+      toast({
+        title: "Error",
+        description: `Failed to update favorite status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+      throw error;
     }
   }
 
   async incrementWearCount(id: string): Promise<WardrobeItem> {
     try {
-      // First get the current item to get its wear count
-      const { data: currentItem, error: fetchError } = await supabase
-        .from('wardrobe_items')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
+      // Get the current item
+      const item = await this.getWardrobeItem(id);
+      
       // Increment the wear count and update last worn date
-      const { data, error } = await supabase
-        .from('wardrobe_items')
-        .update({ 
-          wearCount: (currentItem.wearCount || 0) + 1,
-          lastWorn: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return data as WardrobeItem;
+      const updatedItem = await this.updateWardrobeItem(id, { 
+        wearCount: (item.wearCount || 0) + 1,
+        lastWorn: new Date().toISOString()
+      });
+      
+      // Show success toast
+      toast({
+        title: "Wear Count Updated",
+        description: `${item.name} wear count increased to ${(item.wearCount || 0) + 1}.`,
+      });
+      
+      return updatedItem;
     } catch (error) {
       console.error('Error incrementing wear count:', error);
-      throw new Error(`Failed to increment wear count for item with id ${id}`);
+      toast({
+        title: "Error",
+        description: `Failed to update wear count: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+      throw error;
     }
   }
 }

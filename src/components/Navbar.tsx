@@ -40,6 +40,9 @@ export function Navbar() {
               <Link to="/outfits" className="text-sm font-medium hover:text-primary">
                 Outfits
               </Link>
+              <Link to="/pricing" className="text-sm font-medium hover:text-primary">
+                Pricing
+              </Link>
               {user && (
                 <>
                   <Link to="/dashboard" className="text-sm font-medium hover:text-primary">
@@ -98,6 +101,9 @@ export function Navbar() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/outfits">Outfits</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/pricing">Pricing</Link>
                   </DropdownMenuItem>
                   {user && (
                     <>

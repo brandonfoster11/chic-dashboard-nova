@@ -193,4 +193,27 @@ export class RateLimiter {
       }
     }
   }
+
+  /**
+   * Check if a key is rate limited
+   * @param key - IP address or user identifier
+   * @returns Object with limited status and retry time
+   */
+  check(key: string): { limited: boolean; retryAfter: number } {
+    const ipLimited = this.isIpLimited(key);
+    const ipRetryAfter = this.getIpTimeRemaining(key);
+    
+    return {
+      limited: ipLimited,
+      retryAfter: ipRetryAfter
+    };
+  }
+  
+  /**
+   * Record a failed authentication attempt
+   * @param key - IP address or user identifier
+   */
+  recordFailedAttempt(key: string): void {
+    this.incrementIp(key);
+  }
 }

@@ -1,188 +1,229 @@
-import { useNavigate } from "react-router-dom";
-import { NeumorphicButton } from "@/components/ui/neumorphic-button";
-import { NeumorphicCard } from "@/components/ui/neumorphic-card";
-import { motion } from "framer-motion";
+import React from 'react';
 
-const Landing = () => {
-  const navigate = useNavigate();
-
-  // Animation variants for staggered animations
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.3
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: "easeOut" } }
-  };
-
-  const featureVariants = {
-    hidden: { scale: 0.9, opacity: 0 },
-    visible: { 
-      scale: 1, 
-      opacity: 1, 
-      transition: { duration: 0.5 } 
-    },
-    hover: { 
-      y: -10,
-      boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-      transition: { duration: 0.3 }
-    }
-  };
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gray-90 text-gray-dark-80">
-      <div className="container mx-auto px-4">
-        {/* Hero Section */}
-        <motion.div 
-          className="flex flex-col-reverse lg:flex-row items-center gap-12 py-16"
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-        >
-          <motion.div className="flex-1 space-y-8" variants={itemVariants}>
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-              Your AI-Powered
-              <span className="text-primary block">Personal Stylist</span>
-            </h1>
-            <p className="text-lg text-gray-dark-60 max-w-xl">
-              Discover outfits tailored to your style, instantly. No stress. Just confidence.
-            </p>
-            <div className="space-x-4">
-              <NeumorphicButton 
-                size="lg" 
-                variant="neumorphic"
-                onClick={() => navigate("/register")}
-                withMotion
-              >
-                Style Me for Free
-              </NeumorphicButton>
-              <NeumorphicButton 
-                size="lg" 
-                variant="outline"
-                onClick={() => navigate("/wardrobe")}
-                withMotion
-              >
-                Explore Styles
-              </NeumorphicButton>
-            </div>
-          </motion.div>
-          <motion.div 
-            className="flex-1"
-            variants={itemVariants}
-          >
-            <motion.div
-              className="rounded-lg overflow-hidden shadow-neumorphic-card"
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.3 }}
-            >
-              <img
-                src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"
-                alt="Fashion AI"
-                className="w-full max-w-lg mx-auto"
-              />
-            </motion.div>
-          </motion.div>
-        </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-[#ffffff] to-[#f3e8ff] text-black dark:from-[#0f0f11] dark:to-[#1a1a1e] dark:text-white">
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row items-center">
+        <div className="md:w-1/2 mb-12 md:mb-0">
+          <h1 className="text-5xl font-bold mb-4 leading-tight">Style smarter.<br />Dress sharper.</h1>
+          <p className="text-xl leading-relaxed mb-8 max-w-md">
+            StyleAI is your personal fashion assistant powered by machine learning.
+          </p>
+          <div className="flex gap-4">
+            <button className="bg-black text-white px-8 py-3 rounded-full text-lg hover:bg-zinc-800 transition dark:bg-white dark:text-black dark:hover:bg-zinc-100">
+              Get started
+            </button>
+            <button className="bg-white border border-black px-8 py-3 rounded-full text-lg hover:bg-zinc-100 dark:bg-zinc-700 dark:text-white dark:border-white dark:hover:bg-zinc-600 transition">
+            <span className="mr-2">▶</span>Watch demo
+            </button>
+          </div>
+        </div>
+        <div className="md:w-1/2">
+          <div className="bg-gradient-to-br from-[#f3e8ff] to-[#ffffff] dark:from-[#1c1c20] dark:to-[#0f0f11] p-4 rounded-xl">
+            <img 
+              src="/images/Outfit_Preview_mockup.png"
+              alt="StyleAI outfit of the day on laptop"
+              className="w-full h-auto"
+            />
+          </div>
+        </div>
+      </section>
 
-        {/* Features Section */}
-        <motion.div 
-          className="grid md:grid-cols-3 gap-8 py-16"
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-        >
-          {[
-            {
-              icon: "🎯",
-              title: "AI Recommendations",
-              description: "Get outfit suggestions that match your mood, season, and upcoming events."
-            },
-            {
-              icon: "🧥",
-              title: "Virtual Wardrobe",
-              description: "Upload, organize, and manage your clothing digitally for easy outfit planning."
-            },
-            {
-              icon: "📈",
-              title: "Style Analytics",
-              description: "See how your style evolves with visual insights and wardrobe trends."
-            }
-          ].map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              variants={itemVariants}
-              custom={index}
-              whileHover="hover"
-            >
-              <NeumorphicCard
-                className="text-center p-6"
-                variant="elevated"
-                hover="glow"
-                padding="lg"
-              >
-                <div className="text-3xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-dark-90">{feature.title}</h3>
-                <p className="text-gray-dark-60">
-                  {feature.description}
-                </p>
-              </NeumorphicCard>
-            </motion.div>
-          ))}
-        </motion.div>
+      {/* Tagline Section */}
+      <section className="py-16 text-center">
+        <h2 className="text-4xl font-bold">Smart Fit. Smarter Style</h2>
+      </section>
 
-        {/* CTA Section */}
-        <motion.div 
-          className="py-16 text-center rounded-lg mb-16"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-        >
-          <NeumorphicCard
-            className="max-w-4xl mx-auto"
-            variant="elevated"
-            hover="glow"
-            padding="lg"
-            animate
-          >
-            <div className="space-y-8 py-4">
-              <h2 className="text-3xl md:text-4xl font-bold text-primary">
-                Ready to Transform Your Style?
-              </h2>
-              <p className="text-xl text-gray-dark-70">
-                Join thousands of fashion lovers already styling smarter with AI.
-              </p>
-              <div className="space-x-4">
-                <NeumorphicButton 
-                  size="lg" 
-                  variant="neumorphic"
-                  onClick={() => navigate("/register")}
-                  withMotion
-                >
-                  Get Started Now
-                </NeumorphicButton>
-                <NeumorphicButton 
-                  size="lg" 
-                  variant="outline"
-                  onClick={() => navigate("/tour")}
-                  withMotion
-                >
-                  Take a Tour
-                </NeumorphicButton>
+      {/* Features Section */}
+      <section className="max-w-6xl mx-auto px-6 pb-20 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="bg-white dark:bg-[#1c1c20] p-6 rounded-lg">
+          <div className="mb-4">
+            <img 
+              src="/images/Recommend_Outfit.png" 
+              alt="Personalized recommendation interface"
+              className="w-full h-auto rounded-md"
+            />
+          </div>
+          <h3 className="text-2xl font-semibold mb-2">Personalized recommendation</h3>
+          <p className="text-zinc-600 dark:text-zinc-300">
+            StyleAI learns your preferences and body shape to match outfits that feel just right.
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-[#1c1c20] p-6 rounded-lg">
+          <div className="mb-4">
+            <img 
+              src="/images/Outfit_generator.png" 
+              alt="AI outfit generator interface"
+              className="w-full h-auto rounded-md"
+            />
+          </div>
+          <h3 className="text-2xl font-semibold mb-2">AI-driven suggestions</h3>
+          <p className="text-zinc-600 dark:text-zinc-300">
+            As your style evolves, get suggestions to match, suggest an optimal ensemble.
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-[#1c1c20] p-6 rounded-lg">
+          <div className="mb-4">
+            <img 
+              src="/images/wardrobe_management.png" 
+              alt="Wardrobe management UI"
+              className="w-full h-auto rounded-md"
+            />
+          </div>
+          <h3 className="text-2xl font-semibold mb-2">Wardrobe management</h3>
+          <p className="text-zinc-600 dark:text-zinc-300">
+            Easily organize and manage your wardrobe—everything in one sleek interface.
+          </p>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-20 bg-[#f9f5ff] dark:bg-[#15151a]">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-4xl font-bold text-center mb-4">Pricing</h2>
+          <p className="text-xl text-center mb-16 max-w-2xl mx-auto">
+            Choose the plan that fits your style needs
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Free Plan */}
+            <div className="bg-white dark:bg-[#1c1c20] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition">
+              <div className="p-6">
+                <h3 className="text-2xl font-bold mb-2">Free</h3>
+                <p className="text-zinc-600 dark:text-zinc-300 mb-4">Perfect for getting started</p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">$0</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">/month</span>
+                </div>
+                <button className="w-full bg-white border border-black text-black py-3 rounded-full hover:bg-zinc-100 transition dark:bg-[#1c1c20] dark:border-white dark:text-white dark:hover:bg-[#252529]">
+                  Get Started
+                </button>
+              </div>
+              <div className="border-t border-zinc-100 dark:border-zinc-800 p-6">
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Basic wardrobe management</span>
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>5 outfit suggestions per month</span>
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Community access</span>
+                  </li>
+                </ul>
               </div>
             </div>
-          </NeumorphicCard>
-        </motion.div>
-      </div>
+
+            {/* Premium Plan */}
+            <div className="bg-white dark:bg-[#1c1c20] rounded-xl overflow-hidden shadow-lg relative">
+              <div className="absolute top-0 right-0 bg-black text-white px-4 py-1 rounded-bl-lg dark:bg-white dark:text-black">
+                Popular
+              </div>
+              <div className="p-6">
+                <h3 className="text-2xl font-bold mb-2">Premium</h3>
+                <p className="text-zinc-600 dark:text-zinc-300 mb-4">For the fashion enthusiast</p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">$9.99</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">/month</span>
+                </div>
+                <button className="w-full bg-black text-white py-3 rounded-full hover:bg-zinc-800 transition dark:bg-white dark:text-black dark:hover:bg-zinc-100">
+                  Subscribe Now
+                </button>
+              </div>
+              <div className="border-t border-zinc-100 dark:border-zinc-800 p-6">
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Advanced wardrobe management</span>
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Unlimited outfit suggestions</span>
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>AI style analysis</span>
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Seasonal trend reports</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="bg-white dark:bg-[#1c1c20] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition">
+              <div className="p-6">
+                <h3 className="text-2xl font-bold mb-2">Pro</h3>
+                <p className="text-zinc-600 dark:text-zinc-300 mb-4">For the style connoisseur</p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">$19.99</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">/month</span>
+                </div>
+                <button className="w-full bg-white border border-black text-black py-3 rounded-full hover:bg-zinc-100 transition dark:bg-[#1c1c20] dark:border-white dark:text-white dark:hover:bg-[#252529]">
+                  Subscribe Now
+                </button>
+              </div>
+              <div className="border-t border-zinc-100 dark:border-zinc-800 p-6">
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Everything in Premium</span>
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Personal stylist consultation</span>
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Shopping recommendations</span>
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Priority support</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Design Mode Section */}
+      <section className="py-10 text-center">
+        <div className="inline-block bg-[#f3e8ff] dark:bg-[#1c1c20] px-6 py-3 rounded-full">
+          Design Mode Enabled
+        </div>
+      </section>
     </div>
   );
-};
-
-export default Landing;
+}

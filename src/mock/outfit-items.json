@@ -1,0 +1,80 @@
+[
+  {
+    "id": "outfit-item-1",
+    "outfit_id": "outfit-1",
+    "wardrobe_item_id": "item-1",
+    "position": 1
+  },
+  {
+    "id": "outfit-item-2",
+    "outfit_id": "outfit-1",
+    "wardrobe_item_id": "item-2",
+    "position": 2
+  },
+  {
+    "id": "outfit-item-3",
+    "outfit_id": "outfit-1",
+    "wardrobe_item_id": "item-8",
+    "position": 3
+  },
+  {
+    "id": "outfit-item-4",
+    "outfit_id": "outfit-2",
+    "wardrobe_item_id": "item-1",
+    "position": 1
+  },
+  {
+    "id": "outfit-item-5",
+    "outfit_id": "outfit-2",
+    "wardrobe_item_id": "item-2",
+    "position": 2
+  },
+  {
+    "id": "outfit-item-6",
+    "outfit_id": "outfit-2",
+    "wardrobe_item_id": "item-3",
+    "position": 3
+  },
+  {
+    "id": "outfit-item-7",
+    "outfit_id": "outfit-2",
+    "wardrobe_item_id": "item-5",
+    "position": 4
+  },
+  {
+    "id": "outfit-item-8",
+    "outfit_id": "outfit-3",
+    "wardrobe_item_id": "item-4",
+    "position": 1
+  },
+  {
+    "id": "outfit-item-9",
+    "outfit_id": "outfit-3",
+    "wardrobe_item_id": "item-7",
+    "position": 2
+  },
+  {
+    "id": "outfit-item-10",
+    "outfit_id": "outfit-3",
+    "wardrobe_item_id": "item-8",
+    "position": 3
+  },
+  {
+    "id": "outfit-item-11",
+    "outfit_id": "outfit-4",
+    "wardrobe_item_id": "item-6",
+    "position": 1
+  },
+  {
+    "id": "outfit-item-12",
+    "outfit_id": "outfit-4",
+    "wardrobe_item_id": "item-7",
+    "position": 2
+  },
+  {
+    "id": "outfit-item-13",
+    "outfit_id": "outfit-4",
+    "wardrobe_item_id": "item-8",
+    "position": 3
+  }
+]

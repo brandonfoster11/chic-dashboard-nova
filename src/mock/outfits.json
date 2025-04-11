@@ -1,0 +1,42 @@
+[
+  {
+    "id": "outfit-1",
+    "user_id": "user-dev-1",
+    "name": "Summer Casual",
+    "description": "Perfect for a casual summer day",
+    "occasion": "casual",
+    "image_url": "/mock/outfits/summer-casual.png",
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "outfit-2",
+    "user_id": "user-dev-1",
+    "name": "Business Casual",
+    "description": "Professional but comfortable",
+    "occasion": "work",
+    "image_url": "/mock/outfits/business-casual.png",
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "outfit-3",
+    "user_id": "user-dev-1",
+    "name": "Night Out",
+    "description": "Stylish evening look",
+    "occasion": "evening",
+    "image_url": "/mock/outfits/night-out.png",
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "outfit-4",
+    "user_id": "user-dev-1",
+    "name": "Weekend Relaxed",
+    "description": "Comfortable weekend attire",
+    "occasion": "casual",
+    "image_url": "/mock/outfits/weekend-relaxed.png",
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-01T00:00:00.000Z"
+  }
+]

@@ -1,154 +1,323 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { AuthService } from '@/services/auth/auth.service';
-import { User } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { USE_MOCKS } from '@/constants';
+import { toast } from '@/components/ui/use-toast';
+import { MockAuthService, AuthState } from '@/services/auth/mock-auth.service';
 
+// Mock user for design mode
+export const MOCK_USER = {
+  id: 'mock-user-id',
+  email: 'user@example.com',
+  name: 'Design Mode User',
+  avatar_url: '/images/avatars/default.png',
+  role_id: 1,
+  created_at: new Date().toISOString()
+};
+
+// Auth context interface
 interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
+  user: any | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  logout: () => Promise<void>;
+  updateProfile: (data: { name?: string; avatar_url?: string }) => Promise<void>;
 }
 
+// Create the auth context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const authService = AuthService.getInstance();
 
+// Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    isLoading: true,
+    error: null
+  });
 
+  // Initialize auth service
+  const authService = MockAuthService.getInstance();
+
+  // Load user on mount
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const result = await authService.getUser();
-        setUser(result.user);
-      } catch (err) {
-        console.error('Failed to load user:', err);
-      } finally {
-        setIsLoading(false);
+        if (USE_MOCKS) {
+          // In design mode, automatically authenticate with mock user
+          setAuthState({
+            user: MOCK_USER,
+            isLoading: false,
+            error: null
+          });
+          console.log('Design Mode: Auto-authenticated with mock user');
+          return;
+        }
+        
+        // Otherwise, check for existing session
+        const state = await authService.getSession();
+        setAuthState(state);
+      } catch (error) {
+        console.error('Error loading user:', error);
+        setAuthState({
+          user: null,
+          isLoading: false,
+          error: 'Failed to load user session'
+        });
       }
     };
-    
-    // Set up auth state change listener
-    const subscription = authService.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
 
-    // Initial user fetch
     loadUser();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    setError(null);
+  // Sign in handler
+  const signIn = async (email: string, password: string) => {
     try {
-      console.log('AuthContext: Attempting login for email:', email);
-      const result = await authService.signIn(email, password);
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      if (result.error) {
-        console.error('AuthContext: Login error:', result.error);
-        setError(result.error);
-        throw new Error(result.error);
+      if (USE_MOCKS) {
+        // In design mode, always succeed with mock user
+        setAuthState({
+          user: MOCK_USER,
+          isLoading: false,
+          error: null
+        });
+        toast({
+          title: "Signed in",
+          description: "Welcome to StyleAI Design Mode",
+        });
+        return;
       }
       
-      if (!result.user) {
-        console.error('AuthContext: No user returned from login');
-        setError('Login failed. Please try again.');
-        throw new Error('Login failed. No user returned.');
-      }
+      const state = await authService.signIn(email, password);
+      setAuthState(state);
       
-      console.log('AuthContext: Login successful');
-      setUser(result.user);
-    } catch (err) {
-      console.error('AuthContext: Login exception:', err);
-      setError(err instanceof Error ? err.message : 'Failed to login');
-      throw err;
-    } finally {
-      setIsLoading(false);
+      if (state.user) {
+        toast({
+          title: "Signed in",
+          description: "Welcome back to StyleAI",
+        });
+      } else if (state.error) {
+        toast({
+          title: "Error",
+          description: state.error,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Sign in error:', error);
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to sign in'
+      }));
+      
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to sign in',
+        variant: "destructive"
+      });
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    setIsLoading(true);
-    setError(null);
+  // Sign up handler
+  const signUp = async (email: string, password: string, name: string) => {
     try {
-      const result = await authService.signUp(email, password, name);
-      if (result.error) {
-        throw new Error(result.error);
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      if (USE_MOCKS) {
+        // In design mode, always succeed with mock user
+        setAuthState({
+          user: MOCK_USER,
+          isLoading: false,
+          error: null
+        });
+        toast({
+          title: "Account created",
+          description: "Welcome to StyleAI Design Mode",
+        });
+        return;
       }
-      setUser(result.user);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to register');
-      throw err;
-    } finally {
-      setIsLoading(false);
+      
+      const state = await authService.signUp(email, password, name);
+      setAuthState(state);
+      
+      if (state.user) {
+        toast({
+          title: "Account created",
+          description: "Welcome to StyleAI",
+        });
+      } else if (state.error) {
+        toast({
+          title: "Error",
+          description: state.error,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Sign up error:', error);
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to create account'
+      }));
+      
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to create account',
+        variant: "destructive"
+      });
     }
   };
 
+  // Sign out handler
+  const signOut = async () => {
+    try {
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      if (USE_MOCKS) {
+        // In design mode, just clear the user state
+        setAuthState({
+          user: null,
+          isLoading: false,
+          error: null
+        });
+        toast({
+          title: "Signed out",
+          description: "You have been signed out of StyleAI Design Mode",
+        });
+        return;
+      }
+      
+      const state = await authService.signOut();
+      setAuthState(state);
+      
+      toast({
+        title: "Signed out",
+        description: "You have been signed out of StyleAI",
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to sign out'
+      }));
+      
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to sign out',
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Reset password handler
   const resetPassword = async (email: string) => {
-    setIsLoading(true);
-    setError(null);
     try {
-      // Note: We need to implement this in the auth service
-      // For now, we'll just log a message
-      console.log(`Password reset requested for ${email}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reset password');
-      throw err;
-    } finally {
-      setIsLoading(false);
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      if (USE_MOCKS) {
+        // In design mode, just simulate success
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        toast({
+          title: "Password reset email sent",
+          description: "Check your inbox for instructions (Design Mode)",
+        });
+        return;
+      }
+      
+      await authService.resetPassword(email);
+      // Fix the type error by using a callback function
+      setAuthState(prev => ({ ...prev, isLoading: false }));
+      
+      toast({
+        title: "Password reset email sent",
+        description: "Check your inbox for instructions",
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to send reset email'
+      }));
+      
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to send reset email',
+        variant: "destructive"
+      });
     }
   };
 
-  const logout = async () => {
-    setIsLoading(true);
-    setError(null);
+  // Update profile handler
+  const updateProfile = async (data: { name?: string; avatar_url?: string }) => {
     try {
-      await authService.signOut();
-      setUser(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to logout');
-      throw err;
-    } finally {
-      setIsLoading(false);
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      if (USE_MOCKS) {
+        // In design mode, just update the mock user
+        const updatedUser = { ...MOCK_USER, ...data };
+        setAuthState({
+          user: updatedUser,
+          isLoading: false,
+          error: null
+        });
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been updated (Design Mode)",
+        });
+        return;
+      }
+      
+      const state = await authService.updateProfile(data);
+      setAuthState(state);
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated",
+      });
+    } catch (error) {
+      console.error('Update profile error:', error);
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to update profile'
+      }));
+      
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to update profile',
+        variant: "destructive"
+      });
     }
+  };
+
+  // Create context value
+  const value = {
+    user: authState.user,
+    isLoading: authState.isLoading,
+    error: authState.error,
+    signIn,
+    signUp,
+    signOut,
+    resetPassword,
+    updateProfile
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        error,
-        login,
-        register,
-        resetPassword,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-function useAuth() {
+// Custom hook to use auth context
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
-
-// Export the hook as a named export from the file
-// This ensures compatibility with Fast Refresh
-export { useAuth };
